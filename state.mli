@@ -5,7 +5,7 @@ type square = {
   level : int;
   xcoord : int;
   ycoord : int;
-  maintainance_cost : int;
+  maintenance_cost : int;
 }
 
 type gamestate = {
