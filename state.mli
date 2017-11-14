@@ -12,7 +12,7 @@ type square = {
 
 type gamestate = {
   money : int;
-  tution : int;
+  tuition : int;
   num_turns : int;
   happiness: int;
   grid : square array array
