@@ -20,6 +20,9 @@ type square = {
   ycoord : int;
   maintenance_cost : int;
   terrain : terrain;
+  dining_access : bool;
+  lecture_access : bool;
+  power_access : bool
 }
 
 type gamestate = {
