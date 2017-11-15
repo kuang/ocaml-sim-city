@@ -4,5 +4,5 @@ type command =
   | UPDATE of int
   | TIME_STEP
 
-val parse : Yojson.Basic.json -> command
+val parse : Yojson.Basic.json -> (command*State.gamestate) option
 val unparse : State.gamestate -> Yojson.Basic.json
