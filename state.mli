@@ -44,12 +44,12 @@ type square = {
 }
 
 (* [gamestate] is a type representing the state of an adventure. It contains
-   all the information necessary to recreate the current state of the game,
-   including overall information (current money, happiness etc) and individual
-   square information (what is current built on each square, resource
-   connections, etc). The overall game information is stored as record fields,
-   while the square information is stored as a 2D array of type square
-   elements. *)
+ * all the information necessary to recreate the current state of the game,
+ * including overall information (current money, happiness etc) and individual
+ * square information (what is current built on each square, resource
+ * connections, etc). The overall game information is stored as record fields,
+ * while the square information is stored as a 2D array of type square
+ * elements. *)
 type gamestate = {
   disaster : disaster option;
   lose : bool;
