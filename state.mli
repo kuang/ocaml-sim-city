@@ -14,10 +14,11 @@ type terrain = Water | Forest | Clear | Gorges
 type disaster = Fire | Blizzard | Prelim
 
 (* [building_type] is a type encompassing the different options for what can be
-   "built" on a square. Dorm represents dorm buildings, Resource represents
-   resource buildings, Road and Pline represent roads and power line
-   connections. When there is nothing built on a square, the building is Empty. Dorm and Resource buildings are multiple squares in size, so the Section
-   variant exists to represent squares that are part of a larger building. *)
+ * "built" on a square. Dorm represents dorm buildings, Resource represents
+ * resource buildings, Road and Pline represent roads and power line
+ * connections. When there is nothing built on a square, the building is Empty.
+ * Dorm and Resource buildings are multiple squares in size, so the Section
+ * variant exists to represent squares that are part of a larger building. *)
 type building_type =
   | Dorm of (int*int) list
   | Resource of resource
@@ -27,11 +28,11 @@ type building_type =
   | Empty
 
 (* [square] is a type representing the current state of an individual game
-   square. It contains information pertaining to what is currently on the
-   square (represented by field btype), and also attributes that are dependent
-   on btype (ex. maintenance_cost, level). Finally, this type also keeps track
-   of "natural" and "static" information about the square itself, such as its x
-   and y coordinates and terrain features. *)
+ * square. It contains information pertaining to what is currently on the
+ * square (represented by field btype), and also attributes that are dependent
+ * on btype (ex. maintenance_cost, level). Finally, this type also keeps track
+ * of "natural" and "static" information about the square itself, such as its x
+ * and y coordinates and terrain features. *)
 type square = {
   btype : building_type;
   level : int;
