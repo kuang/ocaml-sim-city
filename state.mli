@@ -4,8 +4,14 @@ type resource =
   | Power of int*int list
 type terrain = Water | Forest | Clear | Gorges
 type disaster = Fire | Blizzard | Prelim
+
+(* [building_type] is a type encompassing the different representations of a
+ * "building". Dorm and Section contain information about the squares they
+ * use, and represent dorm and ???. Resource represents resource buildings;
+ * respectively, Road and Pline represent roads and power line connecitons.
+ * When there is nothing built on a square, the building is Empty. *)
 type building_type =
-  | Dorm of int*int list
+  | Dorm of (int*int) list
   | Resource of resource
   | Road
   | Pline (*power lines*)
@@ -45,6 +51,7 @@ type gamestate = {
   time_passed : int;
   grid : square array array
 }
+
 (* [init_state j] returns the initial state of the game. *)
 val init_state : gamestate
 
