@@ -1,8 +1,16 @@
+(* [resource] is a type encompassing the different resources: Dining, Lecture,
+ * and Power. It contains information about the squares that the resource
+ * uses.*)
 type resource =
-  | Dining of int*int list
-  | Lecture of int*int list
-  | Power of int*int list
+  | Dining of (int*int) list
+  | Lecture of (int*int) list
+  | Power of (int*int) list
+
+(* [terrain] represents the different features of the natural landscape of the
+ * game map. *)
 type terrain = Water | Forest | Clear | Gorges
+
+(* [disaster] represents the different types of natural disaster events. *)
 type disaster = Fire | Blizzard | Prelim
 
 (* [building_type] is a type encompassing the different representations of a
