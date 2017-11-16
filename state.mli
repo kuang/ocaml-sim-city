@@ -5,11 +5,11 @@ type resource =
 type terrain = Water | Forest | Clear | Gorges
 type disaster = Fire | Blizzard | Prelim
 
-(* [building_type] is a type encompassing the different representations of a
- * "building". Dorm and Section contain information about the squares they
- * use, and represent dorm and ???. Resource represents resource buildings;
- * respectively, Road and Pline represent roads and power line connecitons.
- * When there is nothing built on a square, the building is Empty. *)
+(* [building_type] is a type encompassing the different options for what can be
+   "built" on a square. Dorm represents dorm buildings, Resource represents
+   resource buildings, Road and Pline represent roads and power line
+   connections. When there is nothing built on a square, the building is Empty. Dorm and Resource buildings are multiple squares in size, so the Section
+   variant exists to represent squares that are part of a larger building. *)
 type building_type =
   | Dorm of (int*int) list
   | Resource of resource
