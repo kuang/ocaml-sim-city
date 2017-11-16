@@ -13,11 +13,11 @@ type building_type =
   | Empty
 
 (* [square] is a type representing the current state of an individual game
- * square. It contains information pertaining to what is currently on the
- * square (represented by field btype), and also attributes that are dependent
- * on btype (ex. maintenance_cost, level). Finally, this type also keeps track
- * of "natural" and "static" information about the square itself, such as its
- * x and y coordinates and terrain features. *)
+   square. It contains information pertaining to what is currently on the
+   square (represented by field btype), and also attributes that are dependent
+   on btype (ex. maintenance_cost, level). Finally, this type also keeps track
+   of "natural" and "static" information about the square itself, such as its x
+   and y coordinates and terrain features. *)
 type square = {
   btype : building_type;
   level : int;
@@ -29,12 +29,12 @@ type square = {
 }
 
 (* [gamestate] is a type representing the state of an adventure. It contains
- * all the information necessary to recreate the current state of the game,
- * including overall information (current money, happiness etc) and individual
- * square information (what is current built on each square, resource
- * connections, etc). The overall game information is stored as record fields,
- * while the square information is stored as a 2D array of type square
- * elements. *)
+   all the information necessary to recreate the current state of the game,
+   including overall information (current money, happiness etc) and individual
+   square information (what is current built on each square, resource
+   connections, etc). The overall game information is stored as record fields,
+   while the square information is stored as a 2D array of type square
+   elements. *)
 type gamestate = {
   disaster : disaster option;
   lose : bool;
@@ -48,5 +48,6 @@ type gamestate = {
 (* [init_state j] returns the initial state of the game. *)
 val init_state : gamestate
 
-
+(* [do' command gamestate] applies [command] to [gamestate] and returns a
+   gamestate object representing the new state of game. *)
 val do' : Command.command -> gamestate -> gamestate
