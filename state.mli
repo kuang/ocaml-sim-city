@@ -65,5 +65,5 @@ type gamestate = {
 val init_state : gamestate
 
 (* [do' command gamestate] applies [command] to [gamestate] and returns a
-   gamestate object representing the new state of game. *)
+ * gamestate object representing the new state of game. *)
 val do' : Command.command -> gamestate -> gamestate
