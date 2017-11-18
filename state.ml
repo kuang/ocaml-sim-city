@@ -18,21 +18,21 @@ type gamestate = {
   grid : square array array
 }
 
-let do_build x y b =
+let do_build x y b st =
   failwith "Unimplemented"
 
-let do_delete x y =
+let do_delete x y st =
   failwith "Unimplemented"
 
-let do_tuition n =
+let do_tuition n st =
   failwith "Unimplemented"
 
-let do_time =
+let do_time st =
   failwith "Unimplemented"
 
-let do' (c:command) =
+let do' (c:command) st =
   match c with
-  | Build (x,y,b) -> do_build x y b
-  | Delete (x,y) -> do_delete x y
-  | SetTuition n -> do_tuition n
-  | TimeStep -> do_time
+  | Build (x,y,b) -> do_build x y b st
+  | Delete (x,y) -> do_delete x y st
+  | SetTuition n -> do_tuition n st
+  | TimeStep -> do_time st
