@@ -61,7 +61,7 @@ type gamestate = {
   grid : square array array
 }
 
-(* [init_state j] returns the initial state of the game. *)
+(* [init_state] returns the initial state of the game. *)
 val init_state : gamestate
 
 (* [do' command gamestate] applies [command] to [gamestate] and returns a
