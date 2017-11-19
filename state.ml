@@ -1,4 +1,19 @@
-type building_type = Unbuildable | Dorm | Resource | Connection | Section
+type resource =
+  | Dining of (int*int) list
+  | Lecture of (int*int) list
+  | Power of (int*int) list
+
+type terrain = Water | Forest | Clear | Gorges
+
+type disaster = Fire | Blizzard | Prelim
+
+type building_type =
+  | Dorm of (int*int) list
+  | Resource of resource
+  | Road
+  | Pline (*power lines*)
+  | Section of int*int
+  | Empty
 
 type square = {
   btype : building_type;
