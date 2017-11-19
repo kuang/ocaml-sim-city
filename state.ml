@@ -20,10 +20,10 @@ type building_type =
 type square = {
   btype : building_type;
   level : int;
-  xcoord : int;
-  ycoord : int;
   maintenance_cost : int;
   population: int;
+  (* xcoord : int; *)
+  (* ycoord : int; *)
 }
 
 type gamestate = {
@@ -32,13 +32,20 @@ type gamestate = {
   message : string option; (*possible prompt for the user*)
   money : int;
   tuition : int;
-  num_turns : int;
   happiness: int;
   time_passed : int;
   grid : square array array
 }
 
-let init_state = {
+let init_square = {
+  btype = Empty;
+  level = 0;
+  maintenance_cost = 0;
+  population= 0;
+  (* xcoord : int; *)
+  (* ycoord : int; *)
+}
+let init_state (grid_size:int)= {
   disaster = None;
   lose = false;
   message = Some ("Welcome to the game!");
@@ -46,8 +53,10 @@ let init_state = {
   tuition = 50000;
   happiness = 50;
   time_passed = 0;
-  grid = failwith "NO INITIAL GRID"
+  grid = Array.make grid_size (Array.make grid_size init_square);
 }
+
+
 
 let do_build x y b st =
   failwith "Unimplemented"
@@ -61,7 +70,7 @@ let do_tuition n st =
 let do_time st =
   failwith "Unimplemented"
 
-let do' (c:command) st =
+let do' (c:Command.command) st =
   match c with
   | Build (x,y,b) -> do_build x y b st
   | Delete (x,y) -> do_delete x y st
