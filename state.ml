@@ -56,8 +56,6 @@ let init_state (grid_size:int)= {
   grid = Array.make grid_size (Array.make grid_size init_square);
 }
 
-
-
 let do_build x y b st =
   failwith "Unimplemented"
 
@@ -65,7 +63,14 @@ let do_delete x y st =
   failwith "Unimplemented"
 
 let do_tuition n st =
-  failwith "Unimplemented"
+  {
+    st with tuition = n;
+            happiness = let updated_happiness =
+                          st.happiness - ((n - st.tuition)/100) in
+              if updated_happiness < (-100) then -100
+              else if updated_happiness > 100 then 100
+              else updated_happiness
+  }
 
 let do_time st =
   failwith "Unimplemented"
