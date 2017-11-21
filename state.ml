@@ -55,6 +55,7 @@ let init_square = {
   (* xcoord : int; *)
   (* ycoord : int; *)
 }
+
 let init_state (grid_size:int)= {
   disaster = None;
   lose = false;
