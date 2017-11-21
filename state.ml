@@ -33,6 +33,9 @@ type square = {
   terrain : terrain;
   (* xcoord : int; *)
   (* ycoord : int; *)
+  dining_access: bool;
+  lec_access: bool;
+  power_access: bool;
 }
 
 type gamestate = {
@@ -51,10 +54,14 @@ let init_square = {
   level = 0;
   maintenance_cost = 0;
   population= 0;
-  terrain = Clear
+  terrain = Clear;
   (* xcoord : int; *)
   (* ycoord : int; *)
+  dining_access = false;
+  lec_access = false;
+  power_access = false;
 }
+
 let init_state (grid_size:int)= {
   disaster = None;
   lose = false;
@@ -65,6 +72,58 @@ let init_state (grid_size:int)= {
   time_passed = 0;
   grid = Array.make grid_size (Array.make grid_size init_square);
 }
+
+(* [gen_disaster] has a small pseudo-random chance of returning [Some disaster],
+ * else returns [None] *)
+let gen_disaster num =
+  Random.init num;
+  let fire = Random.int 50 = 1 in
+  let bliz = Random.int 70 = 1 in
+  let prelim = Random.int 40 = 1 in
+  if fire then Some Fire else if bliz then Some Blizzard
+  else if prelim then Some Prelim else None
+
+(* [get_rpop row] is the total population of all squares in [row] *)
+let get_rpop row =
+  Array.fold_left (fun (acc:int) b  -> b.population + acc) 0 row
+
+let get_rmain row =
+  Array.fold_left (fun (acc:int) b -> b.maintenance_cost + acc) 0 row
+
+(* [get_num st] is the total population of all squares in [grid] *)
+let get_num grid f : int =
+  Array.fold_left (fun (acc:int) r -> f r + acc) 0 grid
+
+(* [check_resources st x y] is [true] if this square is connected to
+ * all resources, [false] otherwise *)
+let check_resources st x y =
+  failwith "Unimplemented"
+
+(* [update_build happ b] is [b'], where [b'] is [b] after a month with
+ * happiness level [happ]. *)
+let update_build happ (b : square) =
+  match b.btype with
+  | Dorm _ -> begin
+      let newpop = b.population + (b.level+1)*happ (* MADE UP NUMBERS*) in {
+    b with btype = b.btype;
+    level = newpop / 500; (* MADE UP NUMBERS*)
+    maintenance_cost = newpop*40;  (* MADE UP NUMBERS*)
+    population = newpop;
+    (* xcoord : int; *)
+    (* ycoord : int; *)
+    }
+    end
+  | _ -> b
+
+(* [update_row happ r] is [r'] containing squares which have stepped one
+ * month under happiness level [happ]. *)
+let update_row happ r =
+  Array.map (update_build happ) r
+
+(* [update_grid happ grid] is [grid'] containing squares which have stepped one
+ * month under happiness level [happ]. *)
+let update_grid happ (grid:square array array) =
+  Array.map (update_row happ) grid
 
 let do_build x y b st : gamestate =
   let curr_square = st.grid.(x).(y) in
@@ -78,6 +137,9 @@ let do_build x y b st : gamestate =
         maintenance_cost = road_cost;
         population = 0;
         terrain = curr_square.terrain;
+        dining_access = false;
+        lec_access = false;
+        power_access = false;
       } in
       let _ =  st.grid.(x).(y) <- new_square in
       st
@@ -106,8 +168,28 @@ let do_tuition n st =
               else updated_happiness
   }
 
+(* [do_time st] is [st'] after a month has passed. *)
 let do_time st =
-  failwith "Unimplemented"
+  let disaster = gen_disaster (st.happiness*st.time_passed) in
+  let happ = if disaster <> None then st.happiness - 10 else st.happiness in
+  let grid = update_grid happ st.grid in
+  let pop = get_num grid get_rpop in
+  let money = if (st.time_passed + 1) mod 12 <> 0
+    then st.money - (get_num st.grid get_rmain)
+    else st.money + pop*st.tuition in
+  let lose = (money < 0 || pop <= 0) && st.time_passed > 11 in
+  let message = if lose then Some "You Lost." else if disaster <> None then
+      Some "A natural disaster occurred!" else None in (* more specfic message? *)
+  {
+    disaster = disaster;
+    lose = lose;
+    message = message;
+    money = money;
+    tuition = st.tuition;
+    happiness = happ;
+    time_passed = st.time_passed + 1;
+    grid = grid;
+  }
 
 let do' (c:Command.command) st =
   match c with
