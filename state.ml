@@ -91,6 +91,11 @@ let do_build x y b st : gamestate =
 let do_delete x y st =
   failwith "Unimplemented"
 
+(* returns: [do_tuition] is a state that reflects the updated tuition and
+ * corresponding happiness changes.
+ * requires:
+ *    - n is the updated tuition
+ *    - st is the original, valid state *)
 let do_tuition n st =
   {
     st with tuition = n;
