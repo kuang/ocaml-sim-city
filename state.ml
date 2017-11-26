@@ -105,7 +105,7 @@ let init_state (grid_size:int)= {
   disaster = None;
   lose = false;
   message = Some ("Welcome to the game!");
-  money = 20;
+  money = 2000;
   tuition = 5;
   happiness = 50;
   time_passed = 0;
@@ -223,21 +223,17 @@ and do_build x y (b:building_type) st : gamestate =
           st with
           message = Some "Invalid build location.";
         }
-      else place_building x y b st) in place_building_state
-  (* match place_building_state.message with
-  | *)
-  (* let update_money = *)
-  (* let *)
+      else place_building x y b st) in
+  match place_building_state.message with
+  | Some "Invalid build location." -> place_building_state
+  | _ -> update_state_money b place_building_state
 
-(* let build_money b st = match b with
-  | Dorm _ ->
-  | Dining of (int*int) list
-  | Lecture of (int*int) list
-  | Power of (int*int) list
-  | Road
-  | Pline (*power lines*)
-  | Section of int*int
-  | Empty  *)
+and update_state_money b st =
+  {
+    st with
+    money = (st.money- (get_bcost b));
+  }
+
 
 let do_delete x y st =
   failwith "Unimplemented"
