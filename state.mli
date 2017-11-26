@@ -1,10 +1,4 @@
-(* [resource] is a type encompassing the different resources: Dining, Lecture,
- * and Power. It contains information about the squares that the resource
- * uses.*)
-type resource =
-  | Dining of (int*int) list
-  | Lecture of (int*int) list
-  | Power of (int*int) list
+(* open Command *)
 
 (* [terrain] represents the different features of the natural landscape of the
  * game map. *)
@@ -19,13 +13,26 @@ type disaster = Fire | Blizzard | Prelim
  * connections. When there is nothing built on a square, the building is Empty.
  * Dorm and Resource buildings are multiple squares in size, so the Section
  * variant exists to represent squares that are part of a larger building. *)
-type building_type =
-  | Dorm of (int*int) list
-  | Resource of resource
-  | Road
-  | Pline (*power lines*)
-  | Section of int*int
-  | Empty
+ type building_type =
+   | Dorm of (int*int) list
+   | Dining of (int*int) list
+   | Lecture of (int*int) list
+   | Power of (int*int) list
+   | Road
+   | Pline (*power lines*)
+   | Section of int*int
+   | Empty
+
+(* Represents commands to be executed on the state. Build, Delete, and
+ * SetTuition are commands issued by the user to build or destroy a building at
+ * specific coordinates, or to change the university's tuition rate. TimeStep
+ * is a command issued automatically at regular time intervals that allows time
+ * to pass in     the game state. *)
+type command =
+  | Build of int*int*building_type
+  | Delete of int*int
+  | SetTuition of int
+  | TimeStep
 
 (* [square] is a type representing the current state of an individual game
  * square. It contains information pertaining to what is currently on the
@@ -36,11 +43,12 @@ type building_type =
 type square = {
   btype : building_type;
   level : int;
-  xcoord : int;
-  ycoord : int;
   maintenance_cost : int;
+  population: int;
   terrain : terrain;
-
+  dining_access: bool;
+  lec_access: bool;
+  power_access: bool;
 }
 
 (* [gamestate] is a type representing the state of an adventure. It contains
@@ -62,8 +70,8 @@ type gamestate = {
 }
 
 (* [init_state] returns the initial state of the game. *)
-val init_state : gamestate
+val init_state : int-> gamestate
 
 (* [do' command gamestate] applies [command] to [gamestate] and returns a
  * gamestate object representing the new state of game. *)
-val do' : Command.command -> gamestate -> gamestate
+val do' : command -> gamestate -> gamestate
