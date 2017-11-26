@@ -151,7 +151,14 @@ let do_build x y b st : gamestate =
   (* st.grid.(x).(y) <-  *)
 
 let do_delete x y st =
-  failwith "Unimplemented"
+  let cur_square = st.grid.(x).(y) in
+  match cur_square.btype with
+  | Dorm lst -> st
+  | Resource rs -> st
+  | Road -> st
+  | Pline -> st
+  | Section (x,y) -> st
+  | Empty -> st (* No building to delete *)
 
 (* returns: [do_tuition] is a state that reflects the updated tuition and
  * corresponding happiness changes.
