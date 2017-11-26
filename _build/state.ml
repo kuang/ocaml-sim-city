@@ -8,9 +8,7 @@ type disaster = Fire | Blizzard | Prelim
 let road_mcost = 10
 let pline_mcost = 10
 let dorm_mcost = 300
-let dining_mcost = 300
-let lecture_mcost = 300
-let power_mcost = 300
+let resource_mcost = 300
 let section_mcost = 0
 let empty_mcost = 0
 
@@ -18,14 +16,10 @@ let empty_mcost = 0
 let road_bcost = 50
 let pline_bcost = 50
 let dorm_bcost = 7000
-let dining_bcost = 7000
-let lecture_bcost = 7000
-let power_bcost = 7000
+let resource_bcost = 7000
 let section_bcost = 0
 let empty_bcost = 0
 
-(*dorm initial population*)
-let dorm_init_pop = 20
 
 type building_type =
   | Dorm of (int*int) list
@@ -59,17 +53,6 @@ type gamestate = {
   grid : square array array
 }
 
-(* Represents commands to be executed on the state. Build, Delete, and
- * SetTuition are commands issued by the user to build or destroy a building at
- * specific coordinates, or to change the university's tuition rate. TimeStep
- * is a command issued automatically at regular time intervals that allows time
- * to pass in     the game state. *)
-type command =
-  | Build of int*int*building_type
-  | Delete of int*int
-  | SetTuition of int
-  | TimeStep
-
 let init_square = {
   btype = Empty;
   level = 0;
@@ -89,7 +72,7 @@ let init_state (grid_size:int)= {
   tuition = 5;
   happiness = 50;
   time_passed = 0;
-  grid = Array.make_matrix grid_size grid_size init_square;
+  grid = Array.make grid_size (Array.make grid_size init_square);
 }
 
 (* [gen_disaster] has a small pseudo-random chance of returning [Some disaster],
@@ -142,112 +125,33 @@ let update_row happ r =
 let update_grid happ (grid:square array array) =
   Array.map (update_row happ) grid
 
+(*TODO: will call place_building x y b st and then check resources and stuff*)
+let do_build x y b st : gamestate = st
+
 (*This following code literally only places a building on the specific
   square, doesn't implement any resource connection stuff*)
-let rec place_building (x:int) (y:int) (b:building_type) st : gamestate =
+let place_building (x:int) (y:int) (b:building_type) st : gamestate =
   let curr_square = st.grid.(x).(y) in
   match b with
-  | Dorm lst ->
-    let new_square = {
-          curr_square with
-          btype = Power(lst);
-          level = 1;
-          maintenance_cost = dorm_mcost;
-          population = dorm_init_pop;
-        } in let _ =  st.grid.(x).(y) <- new_square in
-      place_sections x y (x,y) st
-  | Lecture lst ->
-    let new_square = {
-          curr_square with
-          btype = Lecture(lst);
-          level = 1;
-          maintenance_cost = power_mcost;
-          population = 0;
-        } in let _ =  st.grid.(x).(y) <- new_square in
-      place_sections x y (x,y) st
-  | Power lst ->
-    let new_square = {
-        curr_square with
-        btype = Power(lst);
-        level = 1;
-        maintenance_cost = power_mcost;
-        population = 0;
-      } in let _ =  st.grid.(x).(y) <- new_square in
-    place_sections x y (x,y) st
-  | Dining lst ->
-    let new_square = {
-        curr_square with
-        btype = Dining(lst);
-        level = 1;
-        maintenance_cost = dining_mcost;
-        population = 0;
-      } in let _ =  st.grid.(x).(y) <- new_square in
-    place_sections x y (x,y) st
-  | Road ->
-    let new_square = {
+  | Dorm lst -> st
+  | Lecture lst -> st
+  | Power lst -> st
+  | Dining lst -> st
+  | Road -> (
+      let new_square = {
         curr_square with
         btype = Road;
         level = 1;
         maintenance_cost = road_mcost;
         population = 0;
-      } in let _ =  st.grid.(x).(y) <- new_square in st
-  | Pline ->
-      let new_square = {
-        curr_square with
-        btype = Pline;
-        level = 1;
-        maintenance_cost = pline_mcost;
-        population = 0;
-      } in let _ =  st.grid.(x).(y) <- new_square in st
-  | Section (x2,y2) ->
-    let new_square = {
-      curr_square with
-      btype = Section(x2,y2);
-      level = 1;
-      maintenance_cost = section_mcost;
-      population = 0;
-    } in let _ =  st.grid.(x).(y) <- new_square in st
-  | Empty ->  (*hopefully will never be used?*)
-    let new_square = {
-        curr_square with
-        btype = Empty;
-        level = 0;
-        maintenance_cost = 0;
-        population = 0;
-      } in let _ =  st.grid.(x).(y) <- new_square in st
+      } in
+      let _ =  st.grid.(x).(y) <- new_square in
+      st
+    )
+  | Pline -> st
+  | Section (x,y) -> st
+  | Empty -> st
 
-(*Helper for place_building- generates the surrouding 8 Section buildings*)
-and place_sections x1 y1 ((x2,y2):int*int) st =
-  let st1 = place_building (x1-1) (y1-1) (Section(x2,y2)) st in
-  let st2 = place_building (x1-1) (y1) (Section(x2,y2)) st1 in
-  let st3 = place_building (x1-1) (y1+1) (Section(x2,y2)) st2 in
-  let st4 = place_building (x1) (y1-1) (Section(x2,y2)) st3 in
-  let st5 = place_building (x1) (y1+1) (Section(x2,y2)) st4 in
-  let st6 = place_building (x1+1) (y1-1) (Section(x2,y2)) st5 in
-  let st7 = place_building (x1+1) (y1) (Section(x2,y2)) st6 in
-  place_building (x1+1) (y1+1) (Section(x2,y2)) st7
-
-and do_build x y (b:building_type) st : gamestate =
-  let max_input = ((Array.length st.grid)-1) in
-  if (x=0 || x=max_input || y=0 || y=max_input) then
-    {
-      st with
-      message = Some "Invalid build location.";
-    }
-  else st
-  (* let placed_state = place_building x y b st in *)
-  (* let update_money = *)
-  (* let *)
-
-(* let build_money b st = match b with
-  | Dorm _ ->
-  | Dining of (int*int) list
-  | Lecture of (int*int) list
-  | Power of (int*int) list
-  | Road
-  | Pline (*power lines*)
-  | Section of int*int
-  | Empty  *)
 
 let do_delete x y st =
   failwith "Unimplemented"
@@ -290,9 +194,9 @@ let do_time st =
     grid = grid;
   }
 
-let do' (c:command) st =
+let do' (c:Command.command) st =
   match c with
-  | Build (x,y,b) -> do_build x y b st
+  | Build (x,y,str) -> do_build x y str st
   | Delete (x,y) -> do_delete x y st
   | SetTuition n -> do_tuition n st
   | TimeStep -> do_time st
