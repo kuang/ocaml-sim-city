@@ -1,5 +1,3 @@
-open Command
-
 type terrain = Water | Forest | Clear | Gorges
 
 type disaster = Fire | Blizzard | Prelim
@@ -58,6 +56,28 @@ type gamestate = {
   time_passed : int;
   grid : square array array
 }
+
+(*wrapper function to easily access maintenance costs of a given building type*)
+let get_mcost (b:building_type) = match b with
+  | Dorm _ -> dorm_mcost
+  | Dining _ -> dining_mcost
+  | Lecture _ -> lecture_mcost
+  | Power _ -> power_mcost
+  | Road -> road_mcost
+  | Pline -> pline_mcost
+  | Section _ -> section_mcost
+  | Empty -> empty_mcost
+
+(*wrapper function to easily access building costs of a given building type*)
+let get_bcost (b:building_type) = match b with
+  | Dorm _ -> dorm_bcost
+  | Dining _ -> dining_bcost
+  | Lecture _ -> lecture_bcost
+  | Power _ -> power_bcost
+  | Road -> road_bcost
+  | Pline -> pline_bcost
+  | Section _ -> section_bcost
+  | Empty -> empty_bcost
 
 (* Represents commands to be executed on the state. Build, Delete, and
  * SetTuition are commands issued by the user to build or destroy a building at
@@ -147,72 +167,30 @@ let update_grid happ (grid:square array array) =
 let rec place_building (x:int) (y:int) (b:building_type) st : gamestate =
   let curr_square = st.grid.(x).(y) in
   match b with
-  | Dorm lst ->
+  | Lecture _ | Power _ | Dining _ -> (*no population, multiple squares*)
     let new_square = {
           curr_square with
-          btype = Power(lst);
+          btype = b;
+          level = 1;
+          maintenance_cost = get_mcost b;
+          population = 0;
+        } in let _ =  st.grid.(x).(y) <- new_square in
+      place_sections x y (x,y) st
+  | Dorm  _ -> (*has population, multiple squares*)
+    let new_square = {
+          curr_square with
+          btype = b;
           level = 1;
           maintenance_cost = dorm_mcost;
           population = dorm_init_pop;
         } in let _ =  st.grid.(x).(y) <- new_square in
       place_sections x y (x,y) st
-  | Lecture lst ->
-    let new_square = {
-          curr_square with
-          btype = Lecture(lst);
-          level = 1;
-          maintenance_cost = power_mcost;
-          population = 0;
-        } in let _ =  st.grid.(x).(y) <- new_square in
-      place_sections x y (x,y) st
-  | Power lst ->
+  | Road | Pline | Section _ | Empty -> (*single square, no pop*)
     let new_square = {
         curr_square with
-        btype = Power(lst);
+        btype = b;
         level = 1;
-        maintenance_cost = power_mcost;
-        population = 0;
-      } in let _ =  st.grid.(x).(y) <- new_square in
-    place_sections x y (x,y) st
-  | Dining lst ->
-    let new_square = {
-        curr_square with
-        btype = Dining(lst);
-        level = 1;
-        maintenance_cost = dining_mcost;
-        population = 0;
-      } in let _ =  st.grid.(x).(y) <- new_square in
-    place_sections x y (x,y) st
-  | Road ->
-    let new_square = {
-        curr_square with
-        btype = Road;
-        level = 1;
-        maintenance_cost = road_mcost;
-        population = 0;
-      } in let _ =  st.grid.(x).(y) <- new_square in st
-  | Pline ->
-      let new_square = {
-        curr_square with
-        btype = Pline;
-        level = 1;
-        maintenance_cost = pline_mcost;
-        population = 0;
-      } in let _ =  st.grid.(x).(y) <- new_square in st
-  | Section (x2,y2) ->
-    let new_square = {
-      curr_square with
-      btype = Section(x2,y2);
-      level = 1;
-      maintenance_cost = section_mcost;
-      population = 0;
-    } in let _ =  st.grid.(x).(y) <- new_square in st
-  | Empty ->  (*hopefully will never be used?*)
-    let new_square = {
-        curr_square with
-        btype = Empty;
-        level = 0;
-        maintenance_cost = 0;
+        maintenance_cost = get_mcost b;
         population = 0;
       } in let _ =  st.grid.(x).(y) <- new_square in st
 
@@ -228,14 +206,26 @@ and place_sections x1 y1 ((x2,y2):int*int) st =
   place_building (x1+1) (y1+1) (Section(x2,y2)) st7
 
 and do_build x y (b:building_type) st : gamestate =
-  let max_input = ((Array.length st.grid)-1) in
-  if (x=0 || x=max_input || y=0 || y=max_input) then
-    {
-      st with
-      message = Some "Invalid build location.";
-    }
-  else st
-  (* let placed_state = place_building x y b st in *)
+  let place_building_state = (
+  match b with
+    | Dorm _ | Dining _ | Lecture _ | Power _ ->
+    let max_input = ((Array.length st.grid)-2) in
+    if (x<1 || x>max_input || y<1 || y>max_input) then
+       {
+        st with
+        message = Some "Invalid build location.";
+       }
+       else place_building x y b st
+    | _ ->
+      let max_input = ((Array.length st.grid)-1) in
+      if (x<0 || x>max_input || y<0 || y>max_input) then
+        {
+          st with
+          message = Some "Invalid build location.";
+        }
+      else place_building x y b st) in place_building_state
+  (* match place_building_state.message with
+  | *)
   (* let update_money = *)
   (* let *)
 
