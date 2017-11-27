@@ -15,7 +15,7 @@ let empty_mcost = 0
 (*global build costs*)
 let road_bcost = 50
 let pline_bcost = 50
-let dorm_bcost = 7000
+let dorm_bcost = 700
 let dining_bcost = 7000
 let lecture_bcost = 7000
 let power_bcost = 7000
@@ -226,35 +226,43 @@ and place_sections x1 y1 ((x2,y2):int*int) st =
   let st7 = place_building (x1+1) (y1) (Section(x2,y2)) st6 in
   place_building (x1+1) (y1+1) (Section(x2,y2)) st7
 
+
+(*Main logic for building something new. If invalid location, returns [st] but
+ *with message field "Invalid build location." If not enough money, returns
+ *[st] but with message field "Invalid funds." *)
 and do_build x y (b:building_type) st : gamestate =
-  let place_building_state = (
-  match b with
-    | Dorm _ | Dining _ | Lecture _ | Power _ ->
-    let max_input = ((Array.length st.grid)-2) in
-    if (x<1 || x>max_input || y<1 || y>max_input) then
-       {
-        st with
-        message = Some "Invalid build location.";
-       }
-       else place_building x y b st
-    | _ ->
-      let max_input = ((Array.length st.grid)-1) in
-      if (x<0 || x>max_input || y<0 || y>max_input) then
+  let moneycheck_state = update_state_money b st in
+  match moneycheck_state.message with
+  | Some "Invalid funds." -> moneycheck_state
+  | _ ->
+    let placed_building_st = (
+    match b with
+      | Dorm _ | Dining _ | Lecture _ | Power _ ->
+      let max_input = ((Array.length st.grid)-2) in
+      if (x<1 || x>max_input || y<1 || y>max_input) then
         {
           st with
           message = Some "Invalid build location.";
         }
-      else place_building x y b st) in
-  match place_building_state.message with
-  | Some "Invalid build location." -> place_building_state
-  | _ -> update_state_money b place_building_state
+      else place_building x y b moneycheck_state
+      | _ ->
+        let max_input = ((Array.length st.grid)-1) in
+        if (x<0 || x>max_input || y<0 || y>max_input) then
+          {
+            st with
+            message = Some "Invalid build location.";
+          }
+        else place_building x y b moneycheck_state) in
+    match placed_building_st.message  with
+    | Some "Invalid build location." -> placed_building_st
+    | _ ->
+      {
+        placed_building_st with
+        time_passed = placed_building_st.time_passed+1;
+      }
 
-and update_state_money b st =
-  {
-    st with
-    money = (st.money- (get_bcost b));
-  }
 
+<<<<<<< HEAD
 (* returns: Updated square "reset" to an empty square with no buildings on it.
  * requires: [sq] is a valid square. *)
 let delete_square sq = {sq with
@@ -262,6 +270,21 @@ let delete_square sq = {sq with
   level = 0;
   maintenance_cost = 0;
   population = 0}
+=======
+and update_state_money b st =
+  let bcost = get_bcost b in
+  if bcost<st.money then
+    {
+      st with
+      money = (st.money-bcost);
+      message = None;
+    }
+  else
+    {
+      st with
+      message = Some "Invalid funds.";
+    }
+>>>>>>> a5eaf20fa97039c2b6e953cafc047598b71c6f59
 
 (* returns: Updated state with building on [sq] deleted
  * requires:
