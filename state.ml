@@ -430,9 +430,9 @@ let valid_delete_coord x y st =
   else
     {st with message = Some "Invalid delete location."}
 
-let do' (c:command) st =
+let rec do' (c:command) st =
   match c with
   | Build (x,y,b) -> do_build x y b st
-  | Delete (x,y) -> valid_delete_coord x y st
+  | Delete (x,y) -> let st' = valid_delete_coord x y st in do' TimeStep st'
   | SetTuition n -> do_tuition n st
   | TimeStep -> do_time st
