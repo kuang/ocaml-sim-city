@@ -364,7 +364,9 @@ let delete_b_sections x y st =
 let delete_building x y st sq =
   if st.money - (get_dcost sq.btype) > 0 then
     match sq.btype with
-    | Dorm  | Dining  | Lecture  | Power | Park  -> delete_b_sections x y st
+    | Dorm  | Dining  | Lecture  | Power -> delete_b_sections x y st
+    | Park -> let st' = delete_b_sections x y st in
+      {st' with happiness = st'.happiness - park_happiness}
     | Road | Pline -> let st' = delete_square_grid x y st sq in
       {st' with message = None}
     | Section _ | Empty -> {st with message = None}
