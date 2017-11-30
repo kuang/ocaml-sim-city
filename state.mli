@@ -18,8 +18,8 @@ type disaster = Fire | Blizzard | Prelim
    | Dining
    | Lecture
    | Power
-   | Road
    | Park
+   | Road
    | Pline (*power lines*)
    | Section of int*int
    | Empty

@@ -47,8 +47,8 @@ type building_type =
   | Dining
   | Lecture
   | Power
-  | Road
   | Park
+  | Road
   | Pline (*power lines*)
   | Section of int*int
   | Empty
