@@ -3,37 +3,38 @@ type terrain = Water | Forest | Clear | Gorges
 type disaster = Fire | Blizzard | Prelim
 
 (*global maintenance costs*)
-let road_mcost = 10
-let pline_mcost = 10
 let dorm_mcost = 300
 let dining_mcost = 300
 let lecture_mcost = 300
 let power_mcost = 300
+let park_mcost = 10
+let road_mcost = 10
+let pline_mcost = 10
 let section_mcost = 0
 let empty_mcost = 0
-let park_mcost = 10
+
 
 (*global build costs*)
-let road_bcost = 50
-let pline_bcost = 50
 let dorm_bcost = 700
 let dining_bcost = 7000
 let lecture_bcost = 7000
 let power_bcost = 7000
+let park_bcost = 700
+let road_bcost = 50
+let pline_bcost = 50
 let section_bcost = 0
 let empty_bcost = 0
-let park_bcost = 700
 
 (* global delete costs *)
-let road_dcost = 10
-let pline_dcost = 10
 let dorm_dcost = 500
 let dining_dcost = 500
 let lecture_dcost = 500
 let power_dcost = 500
+let park_dcost = 50
+let road_dcost = 10
+let pline_dcost = 10
 let section_dcost = 0
 let empty_dcost = 0
-let park_dcost = 50
 
 (*dorm initial population*)
 let dorm_init_pop = 20
