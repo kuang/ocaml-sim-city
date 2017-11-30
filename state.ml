@@ -33,7 +33,7 @@ let lecture_dcost = 500
 let power_dcost = 500
 let section_dcost = 0
 let empty_dcost = 0
-let park_mcost = 50
+let park_dcost = 50
 
 (*dorm initial population*)
 let dorm_init_pop = 20
