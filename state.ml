@@ -221,7 +221,7 @@ let update_resources (g : square array array) : unit =
   propagate_resource g !d Road  (fun s -> {s with dining_access = true});
   propagate_resource g !l Road  (fun s -> {s with lec_access = true});
   propagate_resource g !p Pline (fun s -> {s with power_access = true})
-  
+
 (*This following code literally only places a building on the specific
   square, doesn't implement any resource connection stuff*)
 let rec place_building (x:int) (y:int) (b:building_type) st : gamestate =
@@ -319,7 +319,8 @@ let delete_square sq = {sq with
                         btype = Empty;
                         level = 0;
                         maintenance_cost = 0;
-                        population = 0}
+                        population = 0
+                       }
 
 (* returns: Updated state with building on [sq] deleted
  * requires:
@@ -341,7 +342,8 @@ let delete_b_sections x y st =
   let st6 = delete_square_grid x (y+1) st5 st5.grid.(x).(y+1) in
   let st7 = delete_square_grid (x+1) (y-1) st6 st6.grid.(x+1).(y-1) in
   let st8 = delete_square_grid (x+1) y st7 st7.grid.(x+1).(y) in
-  delete_square_grid (x+1) (y+1) st8 st8.grid.(x+1).(y+1)
+  let st9 = delete_square_grid (x+1) (y+1) st8 st8.grid.(x+1).(y+1) in
+  {st9 with message = None}
 
 (* returns: [delete_building] is an updated state with building on [sq]
  * deleted if there is enough money to delete the building.
@@ -354,8 +356,9 @@ let delete_building x y st sq =
   if st.money - (get_dcost sq.btype) > 0 then
     match sq.btype with
     | Dorm _ | Dining _ | Lecture _ | Power _ -> delete_b_sections x y st
-    | Road | Pline -> delete_square_grid x y st sq
-    | Section _ | Empty -> st
+    | Road | Pline -> let st' = delete_square_grid x y st sq in
+      {st' with message = None}
+    | Section _ | Empty -> {st with message = None}
   else {st with message = Some "You don't have enough money for that."}
 
 (* returns: [do_delete] is an updated state with building on the square at
@@ -433,4 +436,3 @@ let do' (c:command) st =
   | Delete (x,y) -> valid_delete_coord x y st
   | SetTuition n -> do_tuition n st
   | TimeStep -> do_time st
-
