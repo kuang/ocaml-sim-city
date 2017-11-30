@@ -33,7 +33,7 @@ let lecture_dcost = 500
 let power_dcost = 500
 let section_dcost = 0
 let empty_dcost = 0
-let park_mcost = 50
+let park_dcost = 50
 
 (*dorm initial population*)
 let dorm_init_pop = 20
@@ -43,11 +43,12 @@ let park_happiness = 10
 let forest_happiness = 10
 
 type building_type =
-  | Dorm of (int*int) list
-  | Dining of (int*int) list
-  | Lecture of (int*int) list
-  | Power of (int*int) list
+  | Dorm
+  | Dining
+  | Lecture
+  | Power
   | Road
+  | Park
   | Pline (*power lines*)
   | Section of int*int
   | Empty
@@ -76,10 +77,11 @@ type gamestate = {
 
 (*wrapper function to easily access maintenance costs of a given building type*)
 let get_mcost (b:building_type) = match b with
-  | Dorm _ -> dorm_mcost
-  | Dining _ -> dining_mcost
-  | Lecture _ -> lecture_mcost
-  | Power _ -> power_mcost
+  | Dorm  -> dorm_mcost
+  | Dining  -> dining_mcost
+  | Lecture -> lecture_mcost
+  | Power -> power_mcost
+  | Park -> park_mcost
   | Road -> road_mcost
   | Pline -> pline_mcost
   | Section _ -> section_mcost
@@ -87,21 +89,23 @@ let get_mcost (b:building_type) = match b with
 
 (*wrapper function to easily access building costs of a given building type*)
 let get_bcost (b:building_type) = match b with
-  | Dorm _ -> dorm_bcost
-  | Dining _ -> dining_bcost
-  | Lecture _ -> lecture_bcost
-  | Power _ -> power_bcost
+  | Dorm -> dorm_bcost
+  | Dining -> dining_bcost
+  | Lecture -> lecture_bcost
+  | Power -> power_bcost
   | Road -> road_bcost
+  | Park -> park_bcost
   | Pline -> pline_bcost
   | Section _ -> section_bcost
   | Empty -> empty_bcost
 
 (* wrapper function to easily access deletion costs of a given building type *)
 let get_dcost (b:building_type) = match b with
-  | Dorm _ -> dorm_dcost
-  | Dining _ -> dining_dcost
-  | Lecture _ -> lecture_dcost
-  | Power _ -> power_dcost
+  | Dorm -> dorm_dcost
+  | Dining -> dining_dcost
+  | Lecture -> lecture_dcost
+  | Power -> power_dcost
+  | Park -> park_dcost
   | Road -> road_dcost
   | Pline -> pline_dcost
   | Section _ -> section_dcost
@@ -170,7 +174,7 @@ let check_resources st x y =
  * happiness level [happ]. *)
 let update_build happ (b : square) =
   match b.btype with
-  | Dorm _ -> begin
+  | Dorm -> begin
       let newpop = b.population + (b.level+1)*happ (* MADE UP NUMBERS*) in {
     b with btype = b.btype;
     level = newpop / 500; (* MADE UP NUMBERS*)
@@ -219,9 +223,9 @@ let update_resources (g : square array array) : unit =
         power_access = false
       };
       match g.(x).(y).btype with
-      | Dining  _ -> d := (x, y) :: !d
-      | Lecture _ -> l := (x, y) :: !l
-      | Power   _ -> p := (x, y) :: !p
+      | Dining   -> d := (x, y) :: !d
+      | Lecture  -> l := (x, y) :: !l
+      | Power    -> p := (x, y) :: !p
       | _         -> ()
     done
   done;
@@ -234,7 +238,7 @@ let update_resources (g : square array array) : unit =
 let rec place_building (x:int) (y:int) (b:building_type) st : gamestate =
   let curr_square = st.grid.(x).(y) in
   match b with
-  | Lecture _ | Power _ | Dining _ -> (*no population, multiple squares*)
+  | Lecture  | Power  | Dining  | Park -> (*no population, multiple squares*)
     let new_square = {
           curr_square with
           btype = b;
@@ -243,7 +247,7 @@ let rec place_building (x:int) (y:int) (b:building_type) st : gamestate =
           population = 0;
         } in let _ =  st.grid.(x).(y) <- new_square in
       place_sections x y (x,y) st
-  | Dorm  _ -> (*has population, multiple squares*)
+  | Dorm  -> (*has population, multiple squares*)
     let new_square = {
           curr_square with
           btype = b;
@@ -283,7 +287,7 @@ and do_build x y (b:building_type) st : gamestate =
   | _ ->
     let placed_building_st = (
     match b with
-      | Dorm _ | Dining _ | Lecture _ | Power _ ->
+      | Dorm  | Dining  | Lecture  | Power | Park ->
       let max_input = ((Array.length st.grid)-2) in
       if (x<1 || x>max_input || y<1 || y>max_input) then
         {
@@ -358,7 +362,7 @@ let delete_b_sections x y st =
 let delete_building x y st sq =
   if st.money - (get_dcost sq.btype) > 0 then
     match sq.btype with
-    | Dorm _ | Dining _ | Lecture _ | Power _ -> delete_b_sections x y st
+    | Dorm  | Dining  | Lecture  | Power | Park  -> delete_b_sections x y st
     | Road | Pline -> let st' = delete_square_grid x y st sq in
       {st' with message = None}
     | Section _ | Empty -> {st with message = None}
@@ -374,7 +378,7 @@ let delete_building x y st sq =
 let rec do_delete x y st =
   let cur_square = st.grid.(x).(y) in
   match cur_square.btype with
-  | Dorm _ | Dining _ | Lecture _ | Power _ | Road | Pline ->
+  | Dorm  | Dining | Lecture | Power | Road | Pline | Park ->
     delete_building x y st cur_square
   | Section (x,y) -> do_delete x y st
   | Empty -> {st with message = Some "Nothing to delete here."}

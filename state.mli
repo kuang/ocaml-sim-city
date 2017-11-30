@@ -14,11 +14,12 @@ type disaster = Fire | Blizzard | Prelim
  * Dorm and Resource buildings are multiple squares in size, so the Section
  * variant exists to represent squares that are part of a larger building. *)
  type building_type =
-   | Dorm of (int*int) list
-   | Dining of (int*int) list
-   | Lecture of (int*int) list
-   | Power of (int*int) list
+   | Dorm
+   | Dining
+   | Lecture
+   | Power
    | Road
+   | Park
    | Pline (*power lines*)
    | Section of int*int
    | Empty
