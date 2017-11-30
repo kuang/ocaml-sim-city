@@ -22,6 +22,16 @@ let power_bcost = 7000
 let section_bcost = 0
 let empty_bcost = 0
 
+(* global delete costs *)
+let road_dcost = 10
+let pline_dcost = 10
+let dorm_dcost = 500
+let dining_dcost = 500
+let lecture_dcost = 500
+let power_dcost = 500
+let section_dcost = 0
+let empty_dcost = 0
+
 (*dorm initial population*)
 let dorm_init_pop = 20
 
@@ -78,6 +88,17 @@ let get_bcost (b:building_type) = match b with
   | Pline -> pline_bcost
   | Section _ -> section_bcost
   | Empty -> empty_bcost
+
+(* wrapper function to easily access deletion costs of a given building type *)
+let get_dcost (b:building_type) = match b with
+  | Dorm _ -> dorm_dcost
+  | Dining _ -> dining_dcost
+  | Lecture _ -> lecture_dcost
+  | Power _ -> power_dcost
+  | Road -> road_dcost
+  | Pline -> pline_dcost
+  | Section _ -> section_dcost
+  | Empty -> empty_dcost
 
 (* Represents commands to be executed on the state. Build, Delete, and
  * SetTuition are commands issued by the user to build or destroy a building at
@@ -233,7 +254,7 @@ let rec place_building (x:int) (y:int) (b:building_type) st : gamestate =
         population = 0;
       } in let _ =  st.grid.(x).(y) <- new_square in st
 
-(*Helper for place_building- generates the surrouding 8 Section buildings*)
+(*Helper for place_building- generates the surrounding 8 Section buildings*)
 and place_sections x1 y1 ((x2,y2):int*int) st =
   let st1 = place_building (x1-1) (y1-1) (Section(x2,y2)) st in
   let st2 = place_building (x1-1) (y1) (Section(x2,y2)) st1 in
@@ -278,8 +299,6 @@ and do_build x y (b:building_type) st : gamestate =
         placed_building_st with
         time_passed = placed_building_st.time_passed+1;
       }
-
-
 and update_state_money b st =
   let bcost = get_bcost b in
   if bcost<st.money then
@@ -294,14 +313,71 @@ and update_state_money b st =
       message = Some "Invalid funds.";
     }
 
-let do_delete x y st =
-  failwith "Unimplemented"
+(* returns: Updated square "reset" to an empty square with no buildings on it.
+ * requires: [sq] is a valid square. *)
+let delete_square sq = {sq with
+                        btype = Empty;
+                        level = 0;
+                        maintenance_cost = 0;
+                        population = 0}
+
+(* returns: Updated state with building on [sq] deleted
+ * requires:
+ *  - [x] is a valid grid x-coordinate
+ *  - [y] is a valid grid y-coordinate
+ *  - [st] is the current, valid state
+ *  - [sq] is the square at (x,y) *)
+let delete_square_grid x y st sq =
+  let _ = st.grid.(x).(y) <- delete_square sq in st
+
+(* returns: Updated state with building and sections deleted corresponding
+ * to building at grid coordinates (x,y). *)
+let delete_b_sections x y st =
+  let st1 = delete_square_grid (x-1) (y-1) st st.grid.(x-1).(y-1) in
+  let st2 = delete_square_grid (x-1) y st1 st1.grid.(x-1).(y) in
+  let st3 = delete_square_grid (x-1) (y+1) st2 st2.grid.(x-1).(y+1) in
+  let st4 = delete_square_grid x (y-1) st3 st3.grid.(x).(y-1) in
+  let st5 = delete_square_grid x y st4 st4.grid.(x).(y) in
+  let st6 = delete_square_grid x (y+1) st5 st5.grid.(x).(y+1) in
+  let st7 = delete_square_grid (x+1) (y-1) st6 st6.grid.(x+1).(y-1) in
+  let st8 = delete_square_grid (x+1) y st7 st7.grid.(x+1).(y) in
+  delete_square_grid (x+1) (y+1) st8 st8.grid.(x+1).(y+1)
+
+(* returns: [delete_building] is an updated state with building on [sq]
+ * deleted if there is enough money to delete the building.
+ * requires:
+ *  - [x] is a valid grid x-coordinate
+ *  - [y] is a valid grid y-coordinate
+ *  - [st] is the current, valid state
+ *  - [sq] is the square at (x,y) *)
+let delete_building x y st sq =
+  if st.money - (get_dcost sq.btype) > 0 then
+    match sq.btype with
+    | Dorm _ | Dining _ | Lecture _ | Power _ -> delete_b_sections x y st
+    | Road | Pline -> delete_square_grid x y st sq
+    | Section _ | Empty -> st
+  else {st with message = Some "You don't have enough money for that."}
+
+(* returns: [do_delete] is an updated state with building on the square at
+ * grid coordinates (x,y) deleted if one exists, and there is enough money
+ * to cover demolition costs.
+ * requires:
+ *  - [x] is a valid grid x-coordinate
+ *  - [y] is a valid grid y-coordinate
+ *  - [st] is the current, valid state *)
+let rec do_delete x y st =
+  let cur_square = st.grid.(x).(y) in
+  match cur_square.btype with
+  | Dorm _ | Dining _ | Lecture _ | Power _ | Road | Pline ->
+    delete_building x y st cur_square
+  | Section (x,y) -> do_delete x y st
+  | Empty -> {st with message = Some "Nothing to delete here."}
 
 (* returns: [do_tuition] is a state that reflects the updated tuition and
  * corresponding happiness changes.
  * requires:
- *    - n is the updated tuition
- *    - st is the original, valid state *)
+ *    - [n] is the updated tuition
+ *    - [st] is the original, valid state *)
 let do_tuition n st =
   {
     st with tuition = n;
@@ -335,10 +411,26 @@ let do_time st =
     grid = grid;
   }
 
+(* returns: [valid_delete_coord] is an updated state with building on the
+ * square at grid coordinates (x,y) deleted if one exists, grid coordinates
+ * (x,y) are valid grid coordinates, and there is enough money to cover
+ * demolition costs. Otherwise returns the same state with an invalid delete
+ * location message.
+ * requires:
+ *  - [x] is a grid coordinate
+ *  - [y] is a grid coordinate
+ *  - [st] is the current, valid state *)
+let valid_delete_coord x y st =
+  if x >= 0 && x < Array.length st.grid &&
+     y >= 0 && y < Array.length st.grid then
+    do_delete x y st
+  else
+    {st with message = Some "Invalid delete location."}
+
 let do' (c:command) st =
   match c with
   | Build (x,y,b) -> do_build x y b st
-  | Delete (x,y) -> do_delete x y st
+  | Delete (x,y) -> valid_delete_coord x y st
   | SetTuition n -> do_tuition n st
   | TimeStep -> do_time st
 
