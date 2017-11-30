@@ -11,6 +11,7 @@ let lecture_mcost = 300
 let power_mcost = 300
 let section_mcost = 0
 let empty_mcost = 0
+let park_mcost = 10
 
 (*global build costs*)
 let road_bcost = 50
@@ -21,6 +22,7 @@ let lecture_bcost = 7000
 let power_bcost = 7000
 let section_bcost = 0
 let empty_bcost = 0
+let park_bcost = 700
 
 (* global delete costs *)
 let road_dcost = 10
@@ -31,9 +33,14 @@ let lecture_dcost = 500
 let power_dcost = 500
 let section_dcost = 0
 let empty_dcost = 0
+let park_mcost = 50
 
 (*dorm initial population*)
 let dorm_init_pop = 20
+
+(*park happiness*)
+let park_happiness = 10
+let forest_happiness = 10
 
 type building_type =
   | Dorm of (int*int) list
@@ -221,7 +228,7 @@ let update_resources (g : square array array) : unit =
   propagate_resource g !d Road  (fun s -> {s with dining_access = true});
   propagate_resource g !l Road  (fun s -> {s with lec_access = true});
   propagate_resource g !p Pline (fun s -> {s with power_access = true})
-  
+
 (*This following code literally only places a building on the specific
   square, doesn't implement any resource connection stuff*)
 let rec place_building (x:int) (y:int) (b:building_type) st : gamestate =
@@ -294,11 +301,7 @@ and do_build x y (b:building_type) st : gamestate =
         else place_building x y b moneycheck_state) in
     match placed_building_st.message  with
     | Some "Invalid build location." -> placed_building_st
-    | _ ->
-      {
-        placed_building_st with
-        time_passed = placed_building_st.time_passed+1;
-      }
+    | _ -> placed_building_st
 and update_state_money b st =
   let bcost = get_bcost b in
   if bcost<st.money then
@@ -433,4 +436,3 @@ let do' (c:command) st =
   | Delete (x,y) -> valid_delete_coord x y st
   | SetTuition n -> do_tuition n st
   | TimeStep -> do_time st
-
