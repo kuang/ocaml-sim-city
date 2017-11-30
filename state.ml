@@ -322,7 +322,8 @@ let delete_square sq = {sq with
                         btype = Empty;
                         level = 0;
                         maintenance_cost = 0;
-                        population = 0}
+                        population = 0
+                       }
 
 (* returns: Updated state with building on [sq] deleted
  * requires:
@@ -344,7 +345,8 @@ let delete_b_sections x y st =
   let st6 = delete_square_grid x (y+1) st5 st5.grid.(x).(y+1) in
   let st7 = delete_square_grid (x+1) (y-1) st6 st6.grid.(x+1).(y-1) in
   let st8 = delete_square_grid (x+1) y st7 st7.grid.(x+1).(y) in
-  delete_square_grid (x+1) (y+1) st8 st8.grid.(x+1).(y+1)
+  let st9 = delete_square_grid (x+1) (y+1) st8 st8.grid.(x+1).(y+1) in
+  {st9 with message = None}
 
 (* returns: [delete_building] is an updated state with building on [sq]
  * deleted if there is enough money to delete the building.
@@ -357,8 +359,9 @@ let delete_building x y st sq =
   if st.money - (get_dcost sq.btype) > 0 then
     match sq.btype with
     | Dorm _ | Dining _ | Lecture _ | Power _ -> delete_b_sections x y st
-    | Road | Pline -> delete_square_grid x y st sq
-    | Section _ | Empty -> st
+    | Road | Pline -> let st' = delete_square_grid x y st sq in
+      {st' with message = None}
+    | Section _ | Empty -> {st with message = None}
   else {st with message = Some "You don't have enough money for that."}
 
 (* returns: [do_delete] is an updated state with building on the square at
@@ -430,7 +433,7 @@ let valid_delete_coord x y st =
   else
     {st with message = Some "Invalid delete location."}
 
-let do' (c:command) st =
+let rec do' (c:command) st =
   match c with
   | Build (x,y,b) -> do_build x y b st
   | Delete (x,y) -> valid_delete_coord x y st
