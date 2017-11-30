@@ -260,17 +260,6 @@ and do_build x y (b:building_type) st : gamestate =
         placed_building_st with
         time_passed = placed_building_st.time_passed+1;
       }
-
-
-<<<<<<< HEAD
-(* returns: Updated square "reset" to an empty square with no buildings on it.
- * requires: [sq] is a valid square. *)
-let delete_square sq = {sq with
-  btype = Empty;
-  level = 0;
-  maintenance_cost = 0;
-  population = 0}
-=======
 and update_state_money b st =
   let bcost = get_bcost b in
   if bcost<st.money then
@@ -284,7 +273,14 @@ and update_state_money b st =
       st with
       message = Some "Invalid funds.";
     }
->>>>>>> a5eaf20fa97039c2b6e953cafc047598b71c6f59
+
+(* returns: Updated square "reset" to an empty square with no buildings on it.
+ * requires: [sq] is a valid square. *)
+let delete_square sq = {sq with
+                        btype = Empty;
+                        level = 0;
+                        maintenance_cost = 0;
+                        population = 0}
 
 (* returns: Updated state with building on [sq] deleted
  * requires:
@@ -341,8 +337,8 @@ let rec do_delete x y st =
 (* returns: [do_tuition] is a state that reflects the updated tuition and
  * corresponding happiness changes.
  * requires:
- *    - n is the updated tuition
- *    - st is the original, valid state *)
+ *    - [n] is the updated tuition
+ *    - [st] is the original, valid state *)
 let do_tuition n st =
   {
     st with tuition = n;
@@ -376,9 +372,25 @@ let do_time st =
     grid = grid;
   }
 
+(* returns: [valid_delete_coord] is an updated state with building on the
+ * square at grid coordinates (x,y) deleted if one exists, grid coordinates
+ * (x,y) are valid grid coordinates, and there is enough money to cover
+ * demolition costs. Otherwise returns the same state with an invalid delete
+ * location message.
+ * requires:
+ *  - [x] is a grid coordinate
+ *  - [y] is a grid coordinate
+ *  - [st] is the current, valid state *)
+let valid_delete_coord x y st =
+  if x >= 0 && x < Array.length st.grid &&
+     y >= 0 && y < Array.length st.grid then
+    do_delete x y st
+  else
+    {st with message = Some "Invalid delete location."}
+
 let do' (c:command) st =
   match c with
   | Build (x,y,b) -> do_build x y b st
-  | Delete (x,y) -> do_delete x y st
+  | Delete (x,y) -> valid_delete_coord x y st
   | SetTuition n -> do_tuition n st
   | TimeStep -> do_time st
