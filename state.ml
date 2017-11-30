@@ -213,7 +213,7 @@ let propagate_resource g xs c f =
 
 (* [update_resources g] updates [g] to have every square accurately reflect its
  * resource access. *)
-let update_resources (g : square array array) : unit =
+let update_resources (g : square array array) =
   let (d, l, p) = ref [], ref [], ref [] in
   for x = 0 to Array.length g - 1 do
     for y = 0 to Array.length g.(x) - 1 do
@@ -231,7 +231,8 @@ let update_resources (g : square array array) : unit =
   done;
   propagate_resource g !d Road  (fun s -> {s with dining_access = true});
   propagate_resource g !l Road  (fun s -> {s with lec_access = true});
-  propagate_resource g !p Pline (fun s -> {s with power_access = true})
+  propagate_resource g !p Pline (fun s -> {s with power_access = true});
+  g
 
 (*This following code literally only places a building on the specific
   square, doesn't implement any resource connection stuff*)
