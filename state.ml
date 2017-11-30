@@ -195,21 +195,35 @@ let update_row happ r =
 let update_grid happ (grid:square array array) =
   Array.map (update_row happ) grid
 
+let three_by_three x y =
+  [ x - 1, y - 1; x, y - 1; x + 1, y - 1 ;
+    x - 1, y    ; x, y    ; x + 1, y     ;
+    x - 1, y + 1; x, y + 1; x + 1, y + 1 ]
+
 (* [propagate_resource g xs c f] applies [f] to every square in [g] which is
  * connected to a square in [xs] by a series of connectors of type [c];
  * helper function for [update_resources] *)
 let propagate_resource g xs c f =
+  let grid_size = Array.length g in
+  let in_bounds x y = 0 <= x && x < grid_size && 0 <= y && y < grid_size in
   let adjacents x y = [x - 1, y; x + 1, y; x, y - 1; x, y + 1] in
-  let visited = Array.(make_matrix (length g) (length g.(0)) false) in
+  let set_building x y = three_by_three x y |>
+    List.iter (fun (x', y') -> g.(x').(y') <- f g.(x').(y')) in
+  let visited = Array.make_matrix grid_size grid_size false in
   let rec aux (x, y) =
     g.(x).(y) <- f g.(x).(y);
     visited.(x).(y) <- true;
     adjacents x y |> List.iter ( fun (x', y') ->
-      if   g.(x').(y').btype = c
-      then (
-        if    not visited.(x').(y')
-        then  aux (x', y') )
-      else g.(x').(y') <- f g.(x').(y') ) in
+      if   in_bounds x' y'
+      then match g.(x').(y').btype with
+           | x when x = c ->
+               if   not visited.(x').(y')
+               then aux (x', y')
+           | Dorm | Dining | Power | Lecture | Park ->
+               set_building x' y'
+           | Section (x'', y'') ->
+               set_building x'' y''
+           | _ -> () ) in
   List.iter aux xs
 
 (* [update_resources g] updates [g] to have every square accurately reflect its
@@ -224,9 +238,9 @@ let update_resources (g : square array array) =
         power_access = false
       };
       match g.(x).(y).btype with
-      | Dining   -> d := (x, y) :: !d
-      | Lecture  -> l := (x, y) :: !l
-      | Power    -> p := (x, y) :: !p
+      | Dining   -> d := three_by_three x y @ !d
+      | Lecture  -> l := three_by_three x y @ !l
+      | Power    -> p := three_by_three x y @ !p
       | _         -> ()
     done
   done;
