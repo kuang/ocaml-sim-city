@@ -321,11 +321,15 @@ and do_build x y (b:building_type) st : gamestate =
         else place_building x y b moneycheck_state) in
     match placed_building_st.message  with
     | Some "Invalid build location." -> placed_building_st
-    | _ -> (match b with
+    | _ -> let happiness_update_st = (match b with
         | Park ->
           {placed_building_st with
            happiness = park_happiness+placed_building_st.happiness}
-        | _ -> placed_building_st)
+        | _ -> placed_building_st) in
+      {
+        happiness_update_st with
+        grid = update_resources happiness_update_st.grid
+      }
 
 and update_state_money b st =
   let bcost = get_bcost b in
