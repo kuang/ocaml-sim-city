@@ -240,7 +240,7 @@ let update_resources (g : square array array) =
 let rec place_building (x:int) (y:int) (b:building_type) st : gamestate =
   let curr_square = st.grid.(x).(y) in
   match b with
-  | Lecture  | Power  | Dining  | Park -> (*no population, multiple squares*)
+  | Lecture  | Power  | Dining | Park -> (*no population, multiple squares*)
     let new_square = {
           curr_square with
           btype = b;
@@ -248,7 +248,7 @@ let rec place_building (x:int) (y:int) (b:building_type) st : gamestate =
           maintenance_cost = get_mcost b;
           population = 0;
         } in let _ =  st.grid.(x).(y) <- new_square in
-      place_sections x y (x,y) st
+    place_sections x y (x,y) st
   | Dorm  -> (*has population, multiple squares*)
     let new_square = {
           curr_square with
@@ -307,7 +307,12 @@ and do_build x y (b:building_type) st : gamestate =
         else place_building x y b moneycheck_state) in
     match placed_building_st.message  with
     | Some "Invalid build location." -> placed_building_st
-    | _ -> placed_building_st
+    | _ -> (match b with
+        | Park ->
+          {placed_building_st with
+           happiness = park_happiness+placed_building_st.happiness}
+        | _ -> placed_building_st)
+
 and update_state_money b st =
   let bcost = get_bcost b in
   if bcost<st.money then
