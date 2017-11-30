@@ -162,6 +162,45 @@ let update_row happ r =
 let update_grid happ (grid:square array array) =
   Array.map (update_row happ) grid
 
+(* [propagate_resource g xs c f] applies [f] to every square in [g] which is
+ * connected to a square in [xs] by a series of connectors of type [c];
+ * helper function for [update_resources] *)
+let propagate_resource g xs c f =
+  let adjacents x y = [x - 1, y; x + 1, y; x, y - 1; x, y + 1] in
+  let visited = Array.(make_matrix (length g) (length g.(0)) false) in
+  let rec aux (x, y) =
+    g.(x).(y) <- f g.(x).(y);
+    visited.(x).(y) <- true;
+    adjacents x y |> List.iter ( fun (x', y') ->
+      if   g.(x').(y').btype = c
+      then (
+        if    not visited.(x').(y')
+        then  aux (x', y') )
+      else g.(x').(y') <- f g.(x').(y') ) in
+  List.iter aux xs
+
+(* [update_resources g] updates [g] to have every square accurately reflect its
+ * resource access. *)
+let update_resources (g : square array array) : unit =
+  let (d, l, p) = ref [], ref [], ref [] in
+  for x = 0 to Array.length g - 1 do
+    for y = 0 to Array.length g.(x) - 1 do
+      g.(x).(y) <- { g.(x).(y) with
+        dining_access = false;
+        lec_access = false;
+        power_access = false
+      };
+      match g.(x).(y).btype with
+      | Dining  _ -> d := (x, y) :: !d
+      | Lecture _ -> l := (x, y) :: !l
+      | Power   _ -> p := (x, y) :: !p
+      | _         -> ()
+    done
+  done;
+  propagate_resource g !d Road  (fun s -> {s with dining_access = true});
+  propagate_resource g !l Road  (fun s -> {s with lec_access = true});
+  propagate_resource g !p Pline (fun s -> {s with power_access = true})
+  
 (*This following code literally only places a building on the specific
   square, doesn't implement any resource connection stuff*)
 let rec place_building (x:int) (y:int) (b:building_type) st : gamestate =
@@ -302,3 +341,4 @@ let do' (c:command) st =
   | Delete (x,y) -> do_delete x y st
   | SetTuition n -> do_tuition n st
   | TimeStep -> do_time st
+
