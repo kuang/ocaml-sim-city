@@ -145,6 +145,47 @@ let init_state (grid_size:int)= {
   grid = Array.make_matrix grid_size grid_size init_square;
 }
 
+let init_from_file filename =
+  let rec lines c =
+    try
+      let l = input_line c in
+      l :: lines c
+    with End_of_file -> [] in
+  let rec list_of_string = function
+    | "" -> []
+    | st -> String.(
+      get st 0 ::
+      list_of_string (sub st 1 (length st - 1))) in
+  let square_of_char = function
+    | '_' -> init_square
+    | '~' -> { init_square with terrain = Water }
+    | 'T' -> { init_square with terrain = Forest }
+    | 'v' -> { init_square with terrain = Gorges }
+    | _   -> raise (Invalid_argument "Unregonized character") in
+(*  try *)
+    match open_in filename |> lines with
+    | [] -> None
+    | h :: t as xs ->
+      let len = String.length h in
+      if List.exists (fun l -> String.length l <> len) t
+      then None
+      else Some {
+        disaster = None;
+        lose = false;
+        message = Some ("Welcome to the game!");
+        money = 2000;
+        tuition = 5;
+        happiness = 50;
+        time_passed = 0;
+        grid =
+          List.map (fun l ->
+            list_of_string l |>
+            List.map square_of_char |>
+            Array.of_list) xs |>
+          Array.of_list
+      }
+(*  with _ -> None *)
+
 (* [gen_disaster] has a small pseudo-random chance of returning [Some disaster],
  * else returns [None] *)
 let gen_disaster num =
@@ -165,11 +206,6 @@ let get_rmain row =
 (* [get_num st] is the total population of all squares in [grid] *)
 let get_num grid f : int =
   Array.fold_left (fun (acc:int) r -> f r + acc) 0 grid
-
-(* [check_resources st x y] is [true] if this square is connected to
- * all resources, [false] otherwise *)
-let check_resources st x y =
-  failwith "Unimplemented"
 
 (* [update_build happ b] is [b'], where [b'] is [b] after a month with
  * happiness level [happ]. *)
@@ -238,10 +274,10 @@ let update_resources (g : square array array) =
         power_access = false
       };
       match g.(x).(y).btype with
-      | Dining   -> d := three_by_three x y @ !d
-      | Lecture  -> l := three_by_three x y @ !l
-      | Power    -> p := three_by_three x y @ !p
-      | _         -> ()
+      | Dining  -> d := three_by_three x y @ !d
+      | Lecture -> l := three_by_three x y @ !l
+      | Power   -> p := three_by_three x y @ !p
+      | _       -> ()
     done
   done;
   propagate_resource g !d Road  (fun s -> {s with dining_access = true});
