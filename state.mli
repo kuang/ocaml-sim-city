@@ -2,7 +2,7 @@
 
 (* [terrain] represents the different features of the natural landscape of the
  * game map. *)
-type terrain = Water | Forest | Clear | Gorges
+type terrain = Water | Forest | Clear
 
 (* [disaster] represents the different types of natural disaster events. *)
 type disaster = Fire | Blizzard | Prelim

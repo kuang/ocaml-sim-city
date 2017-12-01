@@ -1,4 +1,4 @@
-type terrain = Water | Forest | Clear | Gorges
+type terrain = Water | Forest | Clear
 
 type disaster = Fire | Blizzard | Prelim
 
@@ -160,7 +160,6 @@ let init_from_file filename =
     | '_' -> init_square
     | '~' -> { init_square with terrain = Water }
     | 'T' -> { init_square with terrain = Forest }
-    | 'v' -> { init_square with terrain = Gorges }
     | _   -> raise (Invalid_argument "Unregonized character") in
 (*  try *)
     match open_in filename |> lines with
@@ -338,23 +337,13 @@ and do_build x y (b:building_type) st : gamestate =
   | Some "Invalid funds." -> moneycheck_state
   | _ ->
     let placed_building_st = (
-    match b with
-      | Dorm  | Dining  | Lecture  | Power | Park ->
-      let max_input = ((Array.length st.grid)-2) in
-      if (x<1 || x>max_input || y<1 || y>max_input) then
-        {
-          st with
-          message = Some "Invalid build location.";
-        }
-      else place_building x y b moneycheck_state
-      | _ ->
-        let max_input = ((Array.length st.grid)-1) in
-        if (x<0 || x>max_input || y<0 || y>max_input) then
+      if(is_valid_location x y st b) then
+        place_building x y b moneycheck_state
+      else
           {
             st with
             message = Some "Invalid build location.";
-          }
-        else place_building x y b moneycheck_state) in
+          }) in
     match placed_building_st.message  with
     | Some "Invalid build location." -> placed_building_st
     | _ -> let happiness_update_st = (match b with
@@ -380,6 +369,33 @@ and update_state_money b st =
       st with
       message = Some "Invalid funds.";
     }
+
+(*true if st.(x).(y) is a valid build location for a building of type b.*)
+and is_valid_location (x:int) (y:int)(st:gamestate) (b:building_type) : bool =
+  match b with
+  | Dorm  | Dining  | Lecture  | Power | Park -> check_3x3 x y st
+  | _ -> check_1x1 x y st
+
+(*true if st.(x).(y) is a valid build location for a 3x3 building.*)
+and check_3x3 x y st : bool =
+  let max_input = ((Array.length st.grid)-2) in
+  if (x<1 || x>max_input || y<1 || y>max_input) then false
+  else if st.grid.(x-1).(y-1).btype <> Empty && st.grid.(x-1).(y-1).terrain<>River then false
+  else if st.grid.(x-1).(y).btype <> Empty then false
+  else if st.grid.(x-1).(y+1).btype <> Empty then false
+  else if st.grid.(x).(y-1).btype <> Empty then false
+  else if st.grid.(x).(y).btype <> Empty then false
+  else if st.grid.(x).(y+1).btype <> Empty then false
+  else if st.grid.(x+1).(y-1).btype <> Empty then false
+  else if st.grid.(x+1).(y).btype <> Empty then false
+  else if st.grid.(x+1).(y+1).btype <> Empty then false
+  else true
+
+(*true if st.(x).(y) is a valid build location for a 1x1 building.*)
+and check_1x1 x y st : bool =
+  let max_input = ((Array.length st.grid)-1) in
+  if (x<0 || x>max_input || y<0 || y>max_input) then false
+  else (st.grid.(x).(y).btype == Empty)
 
 (* returns: Updated square "reset" to an empty square with no buildings on it.
  * requires: [sq] is a valid square. *)
