@@ -43,6 +43,11 @@ let dorm_init_pop = 20
 let park_happiness = 10
 let forest_happiness = 10
 
+(* happiness deduction for natural disasters *)
+let fire_happiness = 5
+let blizzard_happiness = 15
+let prelim_happiness = 10
+
 type building_type =
   | Dorm
   | Dining
@@ -203,7 +208,7 @@ let get_rpop row =
 let get_rmain row =
   Array.fold_left (fun (acc:int) b -> b.maintenance_cost + acc) 0 row
 
-(* [get_num st] is the total population of all squares in [grid] *)
+(* [get_num st] is the sum of [f x] over all squares [x] in [grid] *)
 let get_num grid f : int =
   Array.fold_left (fun (acc:int) r -> f r + acc) 0 grid
 
@@ -215,7 +220,7 @@ let update_build happ (b : square) =
       let newpop = b.population + (b.level+1)*happ (* MADE UP NUMBERS*) in {
     b with btype = b.btype;
     level = newpop / 500; (* MADE UP NUMBERS*)
-    maintenance_cost = newpop*40;  (* MADE UP NUMBERS*)
+    maintenance_cost = (newpop / 500)*dorm_mcost;  (* MADE UP NUMBERS*)
     population = newpop;
     }
     end
@@ -466,15 +471,27 @@ let do_tuition n st =
 (* [do_time st] is [st'] after a month has passed. *)
 let do_time st =
   let disaster = gen_disaster (st.happiness*st.time_passed) in
-  let happ = if disaster <> None then st.happiness - 10 else st.happiness in
+  let dishapp = match disaster with
+    | Some Fire -> fire_happiness
+    | Some Blizzard -> blizzard_happiness
+    | Some Prelim -> prelim_happiness
+    | None -> 0 in
+  let happ = max (st.happiness - dishapp) (-100) in
   let grid = update_grid happ st.grid in
   let pop = get_num grid get_rpop in
   let money = if (st.time_passed + 1) mod 12 <> 0
     then st.money - (get_num st.grid get_rmain)
     else st.money + pop*st.tuition in
   let lose = (money < 0 || pop <= 0) && st.time_passed > 11 in
-  let message = if lose then Some "You Lost." else if disaster <> None then
-      Some "A natural disaster occurred!" else None in (* more specfic message? *)
+  let message = if lose then Some "You Lost."
+    else match disaster with
+      | Some Fire -> Some ("A fire occurred! Happiness decreased by "
+                           ^ string_of_int fire_happiness)
+      | Some Blizzard -> Some ("A blizzard occurred! Happiness decreased by "
+                               ^ string_of_int blizzard_happiness)
+      | Some Prelim -> Some ("A prelim occurred! Happiness decreased by "
+                             ^ string_of_int prelim_happiness)
+      | None -> None in
   {
     disaster = disaster;
     lose = lose;
