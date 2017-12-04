@@ -353,7 +353,8 @@ let setup_ui window =
   (* connects the click to callback *)
   dorm_button#connect#clicked ~callback:
     (fun () -> dorm_pressed := true; dining_pressed := false;
-      lecture_pressed := false; bulldoze_pressed := false;
+      lecture_pressed := false; power_pressed := false;
+      park_pressed := false; bulldoze_pressed := false;
       print_endline "Dorm button was pressed") ;
   (* create box with xpm image and put into button *)
   xpm_label_box ~file:"smslice.xpm" ~text:"Dorm" ~packing:dorm_button#add ();
@@ -361,35 +362,40 @@ let setup_ui window =
   let dining_button = GButton.button ~packing:h_box1#add () in
   dining_button#connect#clicked ~callback:
     (fun () -> dorm_pressed := false; dining_pressed := true;
-      lecture_pressed := false; bulldoze_pressed := false;
+      lecture_pressed := false; power_pressed := false;
+      park_pressed := false; bulldoze_pressed := false;
       print_endline "Dining button was pressed");
   xpm_label_box ~file:"house2.xpm" ~text:"Dining Hall" ~packing:dining_button#add ();
 
   let lecture_button = GButton.button ~packing:h_box1#add () in
   lecture_button#connect#clicked ~callback:
     (fun () -> dorm_pressed := false; dining_pressed := false;
-      lecture_pressed := true; bulldoze_pressed := false;
+      lecture_pressed := true; power_pressed := false;
+      park_pressed := false; bulldoze_pressed := false;
       print_endline "Lecture button was pressed");
   xpm_label_box ~file:"forest.xpm" ~text:"Lecture Hall" ~packing:lecture_button#add ();
 
   let power_button = GButton.button ~packing:h_box1#add () in
   power_button#connect#clicked ~callback:
     (fun () -> dorm_pressed := false; dining_pressed := false;
-      lecture_pressed := false; bulldoze_pressed := false;
+      lecture_pressed := false; power_pressed := false;
+      park_pressed := false; bulldoze_pressed := false;
       print_endline "Power button was pressed");
   xpm_label_box ~file:"water.xpm" ~text:"Power Source" ~packing:power_button#add ();
 
   let park_button = GButton.button ~packing:h_box1#add () in
   park_button#connect#clicked ~callback:
     (fun () -> dorm_pressed := false; dining_pressed := false;
-      lecture_pressed := false; bulldoze_pressed := false;
+      lecture_pressed := false; power_pressed := false;
+      park_pressed := false; bulldoze_pressed := false;
       print_endline "Park button was pressed");
   xpm_label_box ~file:"forest.xpm" ~text:"Park" ~packing:park_button#add ();
 
   let bulldoze = GButton.button ~packing:h_box1#add () in
   bulldoze#connect#clicked ~callback:
     (fun () -> dorm_pressed := false; dining_pressed := false;
-      lecture_pressed := false; bulldoze_pressed := true;
+      lecture_pressed := false; power_pressed := false;
+      park_pressed := false; bulldoze_pressed := true;
       print_endline "bulldoze button was pressed");
   xpm_label_box ~file:"bulldozer.xpm" ~text:"Bulldozer" ~packing:bulldoze#add ();
 
