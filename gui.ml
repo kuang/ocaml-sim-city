@@ -121,9 +121,8 @@ class cell ~build ~terrain ?packing ?show () =
         building <- bld;
         pm#set_pixmap
           (match bld with
-           | Dorm -> pixhouse
-           | Lecture -> pixhouse2
-           | Section _ -> pixhouse
+           | Dorm | Section _ -> pixhouse
+           | Dining -> pixhouse2
            | Empty -> begin match terrain with
                | Clear -> pixclear
                | Forest -> pixforest
@@ -201,7 +200,7 @@ class game ~(frame : #GContainer.container) ~(label : #GMisc.label)
         else Empty
 
     method updatestate x y : bool =
-        try (state <- match current_building with
+        try (self#update_build (); state <- match current_building with
         | Empty -> turn#pop ();
           turn#push "Current Date: Dec 2017";
           self#update_turn (); State.do' (Delete (x,y)) state
@@ -219,9 +218,22 @@ class game ~(frame : #GContainer.container) ~(label : #GMisc.label)
           self#update_turn (); State.do' (Build (x,y,Power)) state
         | Park -> turn#pop ();
           turn#push "Current Date: May 1890";
-          self#update_turn (); State.do' (Build (x,y,Power)) state); true
+          self#update_turn (); State.do' (Build (x,y,Power)) state
+          | _ -> state); true
         with
         | _ -> false
+
+        method btostring btype =
+          match btype with
+              | Empty -> "empty"
+              | Dorm -> "dorm"
+              | Lecture -> "lecture"
+              | Power -> "power"
+              | Dining -> "dining"
+              | Park -> "park"
+              | Road -> "road"
+              | Pline -> "pline"
+              | Section (x,y) -> "section"
 
     method play x y =
       (* if action cells ~x ~y ~building:current_building then *)
@@ -232,8 +244,11 @@ class game ~(frame : #GContainer.container) ~(label : #GMisc.label)
                for j = 0 to (size-1) do *)
             let t = (Array.get (Array.get state.grid i) j).terrain in
             let b = (Array.get (Array.get state.grid i) j).btype in
-            (* print_endline ((string_of_int i)^(self#btostring b)); *)
-            action cells i j b
+            let bld = match b with
+              | Section (x,y) -> (Array.get (Array.get state.grid x) y).btype
+              | _ -> b in
+            print_endline ((string_of_int i)^(self#btostring bld));
+            action cells i j bld
           done done)
       (* else
         messages#flash "You cannot build there" ; *)
