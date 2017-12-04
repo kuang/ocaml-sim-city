@@ -76,20 +76,20 @@ let pixclear =
 let pixforest =
   GDraw.pixmap_from_xpm ~file:"forest.xpm" ()
 
-let pixhouse =
-  GDraw.pixmap_from_xpm ~file:"smslice.xpm" ()
-let pixhouse2 =
-  GDraw.pixmap_from_xpm ~file:"house2.xpm" ()
+let pixdorm =
+  GDraw.pixmap_from_xpm ~file:"dorm.xpm" ()
+let pixdining =
+  GDraw.pixmap_from_xpm ~file:"dining.xpm" ()
 let pixlecture =
-  GDraw.pixmap_from_xpm ~file: "forest.xpm" ()
+  GDraw.pixmap_from_xpm ~file: "lecture.xpm" ()
 let pixpower =
-  GDraw.pixmap_from_xpm ~file: "water.xpm" ()
+  GDraw.pixmap_from_xpm ~file: "power.xpm" ()
 let pixpark =
-  GDraw.pixmap_from_xpm ~file: "forest.xpm" ()
+  GDraw.pixmap_from_xpm ~file: "park.xpm" ()
 let pixroad =
-  GDraw.pixmap_from_xpm ~file: "forest.xpm" ()
+  GDraw.pixmap_from_xpm ~file: "road.xpm" ()
 let pixpline =
-  GDraw.pixmap_from_xpm ~file: "water.xpm" ()
+  GDraw.pixmap_from_xpm ~file: "power.xpm" ()
 
 (* Create a new hbox with an image packed into it
  * and pack the box *)
@@ -113,14 +113,14 @@ class cell ~build ~terrain ?packing ?show () =
      | Clear -> pixclear
      | Forest -> pixforest
      | Water -> pixwater end
-   | Dorm -> pixhouse
-   | Dining -> pixhouse2
+   | Dorm -> pixdorm
+   | Dining -> pixdining
    | Lecture -> pixlecture
    | Power -> pixpower
    | Park -> pixpark
    | Road -> pixroad
    | Pline -> pixpline
-   | _ -> pixhouse2 in
+   | _ -> pixdining in
 
   object (self)
     inherit GObj.widget button#as_widget
@@ -133,8 +133,8 @@ class cell ~build ~terrain ?packing ?show () =
         building <- bld;
         pm#set_pixmap
           (match bld with
-           | Dorm | Section _ -> pixhouse
-           | Dining -> pixhouse2
+           | Dorm | Section _ -> pixdorm
+           | Dining -> pixdining
            | Lecture -> pixlecture
            | Power -> pixpower
            | Park -> pixpark
@@ -144,7 +144,7 @@ class cell ~build ~terrain ?packing ?show () =
                | Clear -> pixclear
                | Forest -> pixforest
                | Water -> pixwater end
-           | _ -> pixhouse2)
+           | _ -> pixdining)
       end
   end
 
@@ -403,7 +403,7 @@ let setup_ui window =
       pline_pressed := false; bulldoze_pressed := false;
       print_endline "Dorm button was pressed") ;
   (* create box with xpm image and put into button *)
-  xpm_label_box ~file:"smslice.xpm" ~text:"Dorm" ~packing:dorm_button#add ();
+  xpm_label_box ~file:"dorm.xpm" ~text:"Dorm" ~packing:dorm_button#add ();
 
   let dining_button = GButton.button ~packing:h_box1#add () in
   dining_button#connect#clicked ~callback:
@@ -412,7 +412,7 @@ let setup_ui window =
       park_pressed := false; road_pressed := false;
       pline_pressed := false; bulldoze_pressed := false;
       print_endline "Dining button was pressed");
-  xpm_label_box ~file:"house2.xpm" ~text:"Dining Hall" ~packing:dining_button#add ();
+  xpm_label_box ~file:"dining.xpm" ~text:"Dining Hall" ~packing:dining_button#add ();
 
   let lecture_button = GButton.button ~packing:h_box1#add () in
   lecture_button#connect#clicked ~callback:
@@ -421,7 +421,7 @@ let setup_ui window =
       park_pressed := false; road_pressed := false;
       pline_pressed := false; bulldoze_pressed := false;
       print_endline "Lecture button was pressed");
-  xpm_label_box ~file:"forest.xpm" ~text:"Lecture Hall" ~packing:lecture_button#add ();
+  xpm_label_box ~file:"lecture.xpm" ~text:"Lecture Hall" ~packing:lecture_button#add ();
 
   let power_button = GButton.button ~packing:h_box1#add () in
   power_button#connect#clicked ~callback:
@@ -430,7 +430,7 @@ let setup_ui window =
       park_pressed := false; road_pressed := false;
       pline_pressed := false; bulldoze_pressed := false;
       print_endline "Power button was pressed");
-  xpm_label_box ~file:"water.xpm" ~text:"Power Source" ~packing:power_button#add ();
+  xpm_label_box ~file:"power.xpm" ~text:"Power Source" ~packing:power_button#add ();
 
   let park_button = GButton.button ~packing:h_box2#add () in
   park_button#connect#clicked ~callback:
@@ -439,7 +439,7 @@ let setup_ui window =
       park_pressed := true; road_pressed := false;
       pline_pressed := false; bulldoze_pressed := false;
       print_endline "Park button was pressed");
-  xpm_label_box ~file:"forest.xpm" ~text:"Park" ~packing:park_button#add ();
+  xpm_label_box ~file:"park.xpm" ~text:"Park" ~packing:park_button#add ();
 
   let road_button = GButton.button ~packing:h_box2#add () in
   road_button#connect#clicked ~callback:
@@ -448,7 +448,7 @@ let setup_ui window =
       park_pressed := false; road_pressed := true;
       pline_pressed := false; bulldoze_pressed := false;
       print_endline "Road button was pressed");
-  xpm_label_box ~file:"forest.xpm" ~text:"Road" ~packing:road_button#add ();
+  xpm_label_box ~file:"road.xpm" ~text:"Road" ~packing:road_button#add ();
 
   let pline_button = GButton.button ~packing:h_box2#add () in
   pline_button#connect#clicked ~callback:
@@ -457,7 +457,7 @@ let setup_ui window =
       park_pressed := false; road_pressed := false;
       pline_pressed := true; bulldoze_pressed := false;
       print_endline "Power line button was pressed");
-  xpm_label_box ~file:"water.xpm" ~text:"Power Line" ~packing:pline_button#add ();
+  xpm_label_box ~file:"power.xpm" ~text:"Power Line" ~packing:pline_button#add ();
 
   let bulldoze = GButton.button ~packing:h_box2#add () in
   bulldoze#connect#clicked ~callback:
