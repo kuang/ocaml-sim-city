@@ -76,6 +76,13 @@ let pixclear =
 let pixforest =
   GDraw.pixmap_from_xpm ~file:"forest.xpm" ()
 
+<<<<<<< HEAD
+=======
+let pixhouse =
+  GDraw.pixmap_from_xpm ~file:"smslice.xpm" ()
+let pixhouse2 =
+  GDraw.pixmap_from_xpm ~file:"house2.xpm" ()
+>>>>>>> 072bafece39c3e4c02fbb421ccf6e27736007fd3
 let pixdorm =
   GDraw.pixmap_from_xpm ~file:"dorm.xpm" ()
 let pixdining =
@@ -89,7 +96,11 @@ let pixpark =
 let pixroad =
   GDraw.pixmap_from_xpm ~file: "road.xpm" ()
 let pixpline =
+<<<<<<< HEAD
   GDraw.pixmap_from_xpm ~file: "power.xpm" ()
+=======
+  GDraw.pixmap_from_xpm ~file: "clear.xpm" ()
+>>>>>>> 072bafece39c3e4c02fbb421ccf6e27736007fd3
 
 (* Create a new hbox with an image packed into it
  * and pack the box *)
@@ -133,7 +144,11 @@ class cell ~build ~terrain ?packing ?show () =
         building <- bld;
         pm#set_pixmap
           (match bld with
+<<<<<<< HEAD
            | Dorm | Section _ -> pixdorm
+=======
+           | Dorm -> pixdorm
+>>>>>>> 072bafece39c3e4c02fbb421ccf6e27736007fd3
            | Dining -> pixdining
            | Lecture -> pixlecture
            | Power -> pixpower
@@ -457,7 +472,11 @@ let setup_ui window =
       park_pressed := false; road_pressed := false;
       pline_pressed := true; bulldoze_pressed := false;
       print_endline "Power line button was pressed");
+<<<<<<< HEAD
   xpm_label_box ~file:"power.xpm" ~text:"Power Line" ~packing:pline_button#add ();
+=======
+  xpm_label_box ~file:"clear.xpm" ~text:"Power Line" ~packing:pline_button#add ();
+>>>>>>> 072bafece39c3e4c02fbb421ccf6e27736007fd3
 
   let bulldoze = GButton.button ~packing:h_box2#add () in
   bulldoze#connect#clicked ~callback:
