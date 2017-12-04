@@ -150,7 +150,7 @@ let init_state (grid_size:int)= {
   grid = Array.make_matrix grid_size grid_size init_square;
 }
 
-let init_from_file filename =
+let init_from_file (filename : string) =
   let rec lines c =
     try
       let l = input_line c in
