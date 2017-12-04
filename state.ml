@@ -295,34 +295,90 @@ let rec place_building (x:int) (y:int) (b:building_type) st : gamestate =
   let curr_square = st.grid.(x).(y) in
   match b with
   | Lecture  | Power  | Dining | Park -> (*no population, multiple squares*)
-    let new_square = {
+    (match curr_square.terrain with
+     | Forest ->
+       let new_square =
+         {
+           curr_square with
+           btype = b;
+           level = 1;
+           terrain = Clear;
+           maintenance_cost = get_mcost b;
+           population = 0;
+         }
+       in let _ =  st.grid.(x).(y) <- new_square in
+       let placed_building_st = place_sections x y (x,y) st in
+       {
+         placed_building_st with
+         happiness = placed_building_st.happiness - forest_happiness;
+       }
+      | _ ->
+      let new_square =
+        {
           curr_square with
           btype = b;
           level = 1;
           maintenance_cost = get_mcost b;
           population = 0;
-        } in let _ =  st.grid.(x).(y) <- new_square in
-    place_sections x y (x,y) st
+        }
+    in let _ =  st.grid.(x).(y) <- new_square in place_sections x y (x,y) st)
   | Dorm  -> (*has population, multiple squares*)
-    let new_square = {
-          curr_square with
-          btype = b;
-          level = 1;
-          maintenance_cost = dorm_mcost;
-          population = dorm_init_pop;
-        } in let _ =  st.grid.(x).(y) <- new_square in
-      place_sections x y (x,y) st
+    (match curr_square.terrain with
+     | Forest ->
+       let new_square =
+         {
+           curr_square with
+           btype = b;
+           level = 1;
+           terrain = Clear;
+           maintenance_cost = get_mcost b;
+           population = dorm_init_pop;
+         }
+       in let _ =  st.grid.(x).(y) <- new_square in
+       let placed_building_st = place_sections x y (x,y) st in
+       {
+         placed_building_st with
+         happiness = placed_building_st.happiness - forest_happiness;
+       }
+     | _ ->
+       let new_square =
+         {
+           curr_square with
+           btype = b;
+           level = 1;
+           maintenance_cost = get_mcost b;
+           population = dorm_init_pop;
+         }
+       in let _ =  st.grid.(x).(y) <- new_square in place_sections x y (x,y) st)
   | Road | Pline | Section _ | Empty -> (*single square, no pop*)
-    let new_square = {
-        curr_square with
-        btype = b;
-        level = 1;
-        maintenance_cost = get_mcost b;
-        population = 0;
-      } in let _ =  st.grid.(x).(y) <- new_square in st
+    (match curr_square.terrain with
+     | Forest ->
+       let new_square =
+         {
+           curr_square with
+           btype = b;
+           level = 1;
+           terrain = Clear;
+           maintenance_cost = get_mcost b;
+           population = 0;
+         }
+       in let _ =  st.grid.(x).(y) <- new_square in
+       {
+         st with
+         happiness = st.happiness - forest_happiness;
+       }
+     | _ ->
+      let new_square = {
+         curr_square with
+         btype = b;
+         level = 1;
+         maintenance_cost = get_mcost b;
+         population = 0;
+       } in let _ =  st.grid.(x).(y) <- new_square in st)
+
 
 (*Helper for place_building- generates the surrounding 8 Section buildings*)
-and place_sections x1 y1 ((x2,y2):int*int) st =
+and place_sections x1 y1 ((x2,y2):int*int) st : gamestate =
   let st1 = place_building (x1-1) (y1-1) (Section(x2,y2)) st in
   let st2 = place_building (x1-1) (y1) (Section(x2,y2)) st1 in
   let st3 = place_building (x1-1) (y1+1) (Section(x2,y2)) st2 in
@@ -379,29 +435,42 @@ and update_state_money b st =
 and is_valid_location (x:int) (y:int)(st:gamestate) (b:building_type) : bool =
   match b with
   | Dorm  | Dining  | Lecture  | Power | Park -> check_3x3 x y st
-  | _ -> check_1x1 x y st
+  | _ -> check_1x1 x y b st
 
 (*true if st.(x).(y) is a valid build location for a 3x3 building.*)
 and check_3x3 x y st : bool =
   let max_input = ((Array.length st.grid)-2) in
   if (x<1 || x>max_input || y<1 || y>max_input) then false
-  else if st.grid.(x-1).(y-1).btype <> Empty && st.grid.(x-1).(y-1).terrain<>River then false
-  else if st.grid.(x-1).(y).btype <> Empty then false
-  else if st.grid.(x-1).(y+1).btype <> Empty then false
-  else if st.grid.(x).(y-1).btype <> Empty then false
-  else if st.grid.(x).(y).btype <> Empty then false
-  else if st.grid.(x).(y+1).btype <> Empty then false
-  else if st.grid.(x+1).(y-1).btype <> Empty then false
-  else if st.grid.(x+1).(y).btype <> Empty then false
-  else if st.grid.(x+1).(y+1).btype <> Empty then false
-  else true
+  else
+    let g1 = st.grid.(x-1).(y-1) in
+    let g2 = st.grid.(x-1).(y) in
+    let g3 = st.grid.(x-1).(y+1) in
+    let g4 = st.grid.(x).(y-1) in
+    let g5 = st.grid.(x).(y) in
+    let g6 = st.grid.(x).(y+1) in
+    let g7 = st.grid.(x+1).(y-1) in
+    let g8 = st.grid.(x+1).(y) in
+    let g9 = st.grid.(x+1).(y+1) in
+    if g1.btype <> Empty && g1.terrain<>Water then false
+    else if g2.btype <> Empty && g2.terrain<>Water then false
+    else if g3.btype <> Empty && g3.terrain<>Water then false
+    else if g4.btype <> Empty && g4.terrain<>Water then false
+    else if g5.btype <> Empty && g5.terrain<>Water then false
+    else if g6.btype <> Empty && g6.terrain<>Water then false
+    else if g7.btype <> Empty && g7.terrain<>Water then false
+    else if g8.btype <> Empty && g8.terrain<>Water then false
+    else if g9.btype <> Empty && g9.terrain<>Water then false
+    else true
 
-(*true if st.(x).(y) is a valid build location for a 1x1 building.*)
-and check_1x1 x y st : bool =
-  let max_input = ((Array.length st.grid)-1) in
-  if (x<0 || x>max_input || y<0 || y>max_input) then false
-  else (st.grid.(x).(y).btype == Empty)
-
+(*true if st.(x).(y) is a valid build location for a 1x1 building. Roads can be built on water, other structures cannot. *)
+and check_1x1 x y b st : bool =
+  let max_in = ((Array.length st.grid)-1) in
+  if (x<0||x>max_in ||y<0|| y>max_in || st.grid.(x).(y).btype<>Empty) then false
+  else
+    match b with
+    | Road | Power | Empty-> true
+    | Section _ -> st.grid.(x).(y).terrain<>Water
+    | _ -> false (*should never happen*)
 (* returns: Updated square "reset" to an empty square with no buildings on it.
  * requires: [sq] is a valid square. *)
 let delete_square sq = {sq with
