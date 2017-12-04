@@ -61,17 +61,6 @@ let pixhouse =
 let pixhouse2 =
   GDraw.pixmap_from_xpm ~file:"house2.xpm" ()
 
-<<<<<<< HEAD
-=======
-let pixwater =
-  GDraw.pixmap_from_xpm ~file:"water.xpm" ()
-let pixclear =
-  GDraw.pixmap_from_xpm ~file:"clear.xpm" ()
-let pixforest =
-  GDraw.pixmap_from_xpm ~file:"forest.xpm" ()
-
-
->>>>>>> e4bcd1294daf684b494ce505ee2594f549ed7c59
 (* Create a new hbox with an image packed into it
  * and pack the box *)
 let xpm_label_box ~file ~text ~packing () =
@@ -86,11 +75,6 @@ let xpm_label_box ~file ~text ~packing () =
   GMisc.label ~text ~packing:(box#pack ~padding:3) ()
 
   (* cell: a button with a pixmap on it *)
-<<<<<<< HEAD
-class cell ?packing ?show () =
-
-  let button = GButton.button ?packing ?show ~relief:`NONE () in
-=======
 class cell ~build ~terrain ?packing ?show () =
   let button = GButton.button ?packing ?show ~relief:`NONE () in
   (* let bldimg =
@@ -116,7 +100,6 @@ class cell ~build ~terrain ?packing ?show () =
        | Water -> pixwater end
      | Dorm -> pixhouse
      | _ -> pixhouse2 in
->>>>>>> e4bcd1294daf684b494ce505ee2594f549ed7c59
 
   object (self)
     inherit GObj.widget button#as_widget
