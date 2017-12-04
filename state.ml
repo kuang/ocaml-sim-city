@@ -15,11 +15,11 @@ let empty_mcost = 0
 
 
 (*global build costs*)
-let dorm_bcost = 700
-let dining_bcost = 7000
-let lecture_bcost = 7000
+let dorm_bcost = 10000
+let dining_bcost = 10000
+let lecture_bcost = 10000
 let power_bcost = 500
-let park_bcost = 700
+let park_bcost = 750
 let road_bcost = 50
 let pline_bcost = 50
 let section_bcost = 0
