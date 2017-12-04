@@ -56,7 +56,6 @@ let pixhouse =
 let pixhouse2 =
   GDraw.pixmap_from_xpm ~file:"house2.xpm" ()
 
-
 (* Create a new hbox with an image packed into it
  * and pack the box *)
 let xpm_label_box ~file ~text ~packing () =
@@ -68,12 +67,12 @@ let xpm_label_box ~file ~text ~packing () =
   (* make pixmap from file, put pixmap in box *)
   let pixmap = GDraw.pixmap_from_xpm ~file () in
   GMisc.pixmap pixmap ~packing:(box#pack ~padding:3) ();
-  GMisc.label ~text ~packing:(box#pack ~padding:3) ();
-
+  GMisc.label ~text ~packing:(box#pack ~padding:3) ()
 
   (* cell: a button with a pixmap on it *)
 class cell ?packing ?show () =
-  let button = GButton.button ?packing ?show  ~relief:`NONE () in
+
+  let button = GButton.button ?packing ?show ~relief:`NONE () in
 
   object (self)
     inherit GObj.widget button#as_widget
@@ -109,7 +108,7 @@ open GameGrid
 class game ~(frame : #GContainer.container) ~(label : #GMisc.label)
     ~(statusbar : #GMisc.statusbar) =
 
-  let table = GPack.table ~columns:size ~rows:size ~packing:frame#add () in
+  let table = GPack.table ~columns:size ~rows:size ~packing:(frame#add) () in
 
   object (self)
     val cells =
@@ -278,25 +277,25 @@ let setup_ui window =
 
   (* create button and put it in h_box1
    * - [~relief: `NONE] removes shadows around edge of button  *)
-  let button = GButton.button ~packing:h_box1#add () in
+  let dorm_button = GButton.button ~packing:h_box1#add () in
   (* connects the click to callback *)
-  button#connect#clicked ~callback:
+  dorm_button#connect#clicked ~callback:
     (fun () -> b1 := true; b2 := false; bulldozePressed := false;
       print_endline "house button was pressed") ;
   (* create box with xpm image and put into button *)
-  xpm_label_box ~file:"smslice.xpm" ~text:"house 1" ~packing:button#add ();
+  xpm_label_box ~file:"smslice.xpm" ~text:"Dorm" ~packing:dorm_button#add ();
 
   let button2 = GButton.button ~packing:h_box1#add () in
   button2#connect#clicked ~callback:
     (fun () -> b1 := false; b2 := true; bulldozePressed := false;
       print_endline "house2 button was pressed");
-  xpm_label_box ~file:"house2.xpm" ~text:"house 2" ~packing:button2#add ();
+  xpm_label_box ~file:"house2.xpm" ~text:"Dining Hall" ~packing:button2#add ();
 
   let bulldoze = GButton.button ~packing:h_box1#add () in
   bulldoze#connect#clicked ~callback:
     (fun () -> b1 := false; b2 := false; bulldozePressed := true;
       print_endline "bulldoze button was pressed");
-  xpm_label_box ~file:"bulldozer.xpm" ~text:"bulldozer" ~packing:bulldoze#add ();
+  xpm_label_box ~file:"bulldozer.xpm" ~text:"Bulldozer" ~packing:bulldoze#add ();
 
   (* horizontal line *)
   GMisc.separator `HORIZONTAL ~packing:box1#pack () ;
