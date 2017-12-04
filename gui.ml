@@ -23,8 +23,8 @@ let bulldoze_pressed = ref false
 module type GridSpec = sig
   type t
   val size : int
-  val get : t -> x:int -> y:int -> building
-  val set : t -> x:int -> y:int -> building:building -> unit
+  val get : t -> x:int -> y:int -> State.building_type
+  val set : t -> x:int -> y:int -> building:State.building_type -> unit
 end
 
 
@@ -40,9 +40,9 @@ module Grid (Spec : GridSpec) = struct
    * at (x,y), or sets (x,y) to have the pixmap associated with [building] and
    * returns [true] *)
   let action board ~x ~y ~building =
-    if get board ~x ~y <> `none  && !bulldoze_pressed = false then false
+    if get board ~x ~y <> Empty  && !bulldoze_pressed = false then false
     else begin
-      if !dorm_pressed then
+      (* if !dorm_pressed then
         set board ~x ~y ~building:(`house :> building)
       else if !dining_pressed then
         set board ~x ~y ~building:(`house2 :> building)
@@ -53,7 +53,8 @@ module Grid (Spec : GridSpec) = struct
       else if !park_pressed then
         set board ~x ~y ~building:(`park :> building)
       else
-        set board ~x ~y ~building:(`none :> building); true
+         set board ~x ~y ~building:(`none :> building)*)
+      set board ~x ~y ~building ; true
     end
 end
 
@@ -100,51 +101,40 @@ let xpm_label_box ~file ~text ~packing () =
   (* cell: a button with a pixmap on it *)
 class cell ~build ~terrain ?packing ?show () =
   let button = GButton.button ?packing ?show ~relief:`NONE () in
-  (* let bldimg =
-    match build with
-    | `none -> begin match terrain with
-      | Clear -> "clear.xpm"
-      | Forest -> "forest.xpm"
-      | Water -> "water.xpm" end
-        | `house -> "house.xpm"
-        | `house2 -> "house1.xpm" in
-  let _ = xpm_label_box ~file:bldimg ~text:"" ~packing:button#add () in *)
 
-  let c = 3 in
-  (* let bldng =
-    match build with
-    | `none -> `none
-    | `house -> `house
-     | `house2 -> `house2  in *)
-     let rec bldimg = match build with
-     | Empty -> begin match terrain with
-       | Clear -> pixclear
-       | Forest -> pixforest
-       | Water -> pixwater end
-     | Dorm -> pixhouse
-     | Dining -> pixhouse2
-     | Lecture -> pixlecture
-     | Power -> pixpower
-     | Park -> pixpark
-     | _ -> pixhouse2 in
+   let bldimg = match build with
+   | Empty -> begin match terrain with
+     | Clear -> pixclear
+     | Forest -> pixforest
+     | Water -> pixwater end
+   | Dorm -> pixhouse
+   | Dining -> pixhouse2
+   | Lecture -> pixlecture
+   | Power -> pixpower
+   | Park -> pixpark
+   | _ -> pixhouse2 in
 
   object (self)
     inherit GObj.widget button#as_widget
     method connect = button#connect
-    val mutable building : building = `none
+    val mutable building : State.building_type = Empty
     val pm = GMisc.pixmap bldimg ~packing:button#add ()
-    method mbuilding = building
+    method building = building
     method set_bld bld =
       if bld <> building then begin
         building <- bld;
         pm#set_pixmap
           (match bld with
-            | `none -> pixnone
-            | `house -> pixhouse
-            | `house2 -> pixhouse2
-            | `lecture -> pixlecture
-            | `power -> pixpower
-            | `park -> pixpark)
+           | Dorm | Section _ -> pixhouse
+           | Dining -> pixhouse2
+           | Lecture -> pixlecture
+           | Power -> pixpower
+           | Park -> pixpark
+           | Empty -> begin match terrain with
+               | Clear -> pixclear
+               | Forest -> pixforest
+               | Water -> pixwater end
+           | _ -> pixhouse2)
       end
   end
 
@@ -153,7 +143,7 @@ module GameGrid = Grid (
   struct
     type t = cell array array
     let size = 25
-    let get (grid : t) ~x ~y = grid.(x).(y)#mbuilding
+    let get (grid : t) ~x ~y = grid.(x).(y)#building
     let set (grid : t) ~x ~y ~building = grid.(x).(y)#set_bld building
   end
   )
@@ -187,7 +177,7 @@ class game ~(frame : #GContainer.container) ~(label : #GMisc.label)
 
     method grid = cells
     method table = table
-    val mutable current_building = `house
+    val mutable current_building = Dorm
     val mutable turnnum = 1
     val mutable state = initstate
 
@@ -201,44 +191,72 @@ class game ~(frame : #GContainer.container) ~(label : #GMisc.label)
            "You Lost."); ()
 
     method update_label () =
-      let w, b = 2, 2 in
-      label#set_text (Printf.sprintf "Population: %d \nFunds: $%d " w b)
+      let p, f = 2, state.money in
+      label#set_text (Printf.sprintf "Population: %d \nFunds: $%d " p f)
 
     method update_turn () =
       turnnum <- turnnum +  1
 
+    method update_build () =
+      current_building <- if !dorm_pressed then Dorm
+        else if !lecture_pressed then Lecture
+        else if !dining_pressed then Dining
+        else if !power_pressed then Power
+        else if !park_pressed then Park
+        else if !bulldoze_pressed then Empty
+        else Empty
+
     method updatestate x y : bool =
-        try (state <- match current_building with
-        | `none -> turn#pop ();
+        try (self#update_build (); state <- match current_building with
+        | Empty -> turn#pop ();
           turn#push "Current Date: Dec 2017";
           self#update_turn (); State.do' (Delete (x,y)) state
-        | `house -> turn#pop ();
+        | Dorm -> turn#pop ();
           turn#push "Current Date: May 2020";
           self#update_turn (); State.do' (Build (x,y,Dorm)) state
-        | `house2 -> turn#pop ();
+        | Dining -> turn#pop ();
           turn#push "Current Date: May 1860";
           self#update_turn (); State.do' (Build (x,y,Dining)) state
-        | `lecture -> turn#pop ();
+        | Lecture -> turn#pop ();
           turn#push "Current Date: May 1870";
           self#update_turn (); State.do' (Build (x,y,Lecture)) state
-        | `power -> turn#pop ();
+        | Power -> turn#pop ();
           turn#push "Current Date: May 1880";
           self#update_turn (); State.do' (Build (x,y,Power)) state
-        | `park -> turn#pop ();
+        | Park -> turn#pop ();
           turn#push "Current Date: May 1890";
-          self#update_turn (); State.do' (Build (x,y,Park)) state); true
+          self#update_turn (); State.do' (Build (x,y,Park)) state
+          | _ -> state); true
         with
         | _ -> false
 
+        method btostring btype =
+          match btype with
+              | Empty -> "empty"
+              | Dorm -> "dorm"
+              | Lecture -> "lecture"
+              | Power -> "power"
+              | Dining -> "dining"
+              | Park -> "park"
+              | Road -> "road"
+              | Pline -> "pline"
+              | Section (x,y) -> "section"
+
     method play x y =
       (* if action cells ~x ~y ~building:current_building then *)
-      if self#updatestate x y then
-        cells <- Array.init size
-          ~f:(fun i -> Array.init size
-                 ~f:(fun j ->
-                     let t = (Array.get (Array.get state.grid i) j).terrain in
-                     let b = (Array.get (Array.get state.grid i) j).btype in
-                     new cell ~build:b ~terrain:t ~packing:(table#attach ~top:i ~left:j) ()))
+      if self#updatestate x y then (self#update_label ();
+        for i = max (x-2) 0 to min (x+2) (size-1) do
+          for j = max (y-2) 0 to min (y+2) (size-1) do
+            (* for i = 0 to (size-1) do
+               for j = 0 to (size-1) do *)
+            let t = (Array.get (Array.get state.grid i) j).terrain in
+            let b = (Array.get (Array.get state.grid i) j).btype in
+            let bld = match b with
+              | Section (x,y) -> (Array.get (Array.get state.grid x) y).btype
+              | _ -> b in
+            print_endline ((string_of_int i)^(self#btostring bld));
+            action cells i j bld
+          done done)
       (* else
         messages#flash "You cannot build there" ; *)
 
