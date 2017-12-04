@@ -11,11 +11,14 @@ let initstate = match State.init_from_file "map.txt" with
 
 let _ = GtkMain.Main.init ()
 
-type building = [`none|`house|`house2]
+type building = [`none|`house|`house2|`lecture|`power|`park]
 
-let b1 = ref true
-let b2 = ref false
-let bulldozePressed = ref false
+let dorm_pressed = ref true
+let dining_pressed = ref false
+let lecture_pressed = ref false
+let power_pressed = ref false
+let park_pressed = ref false
+let bulldoze_pressed = ref false
 
 module type GridSpec = sig
   type t
@@ -37,11 +40,18 @@ module Grid (Spec : GridSpec) = struct
    * at (x,y), or sets (x,y) to have the pixmap associated with [building] and
    * returns [true] *)
   let action board ~x ~y ~building =
-    if get board ~x ~y <> `none  && !bulldozePressed = false then false else begin
-      if !b1 && !b2 = false && !bulldozePressed = false then
+    if get board ~x ~y <> `none  && !bulldoze_pressed = false then false
+    else begin
+      if !dorm_pressed then
         set board ~x ~y ~building:(`house :> building)
-      else if !b2 then
+      else if !dining_pressed then
         set board ~x ~y ~building:(`house2 :> building)
+      else if !lecture_pressed then
+        set board ~x ~y ~building:(`lecture:> building)
+      else if !power_pressed then
+        set board ~x ~y ~building:(`power :> building)
+      else if !park_pressed then
+        set board ~x ~y ~building:(`park :> building)
       else
         set board ~x ~y ~building:(`none :> building); true
     end
@@ -56,10 +66,23 @@ let window = GWindow.window ~title:"Not Sim City" ()
 let pixnone =
   (* empty *)
   GDraw.pixmap ~window ~width:20 ~height:20 ~mask:true ()
+let pixwater =
+  GDraw.pixmap_from_xpm ~file:"water.xpm" ()
+let pixclear =
+  GDraw.pixmap_from_xpm ~file:"clear.xpm" ()
+let pixforest =
+  GDraw.pixmap_from_xpm ~file:"forest.xpm" ()
+
 let pixhouse =
   GDraw.pixmap_from_xpm ~file:"smslice.xpm" ()
 let pixhouse2 =
   GDraw.pixmap_from_xpm ~file:"house2.xpm" ()
+let pixlecture =
+  GDraw.pixmap_from_xpm ~file: "forest.xpm" ()
+let pixpower =
+  GDraw.pixmap_from_xpm ~file: "water.xpm" ()
+let pixpark =
+  GDraw.pixmap_from_xpm ~file: "forest.xpm" ()
 
 (* Create a new hbox with an image packed into it
  * and pack the box *)
@@ -187,7 +210,16 @@ class game ~(frame : #GContainer.container) ~(label : #GMisc.label)
           self#update_turn (); State.do' (Build (x,y,Dorm)) state
         | `house2 -> turn#pop ();
           turn#push "Current Date: May 1860";
-          self#update_turn (); State.do' (Build (x,y,Lecture)) state); true
+          self#update_turn (); State.do' (Build (x,y,Dining)) state
+        | `lecture -> turn#pop ();
+          turn#push "Current Date: May 1870";
+          self#update_turn (); State.do' (Build (x,y,Lecture)) state
+        | `power -> turn#pop ();
+          turn#push "Current Date: May 1880";
+          self#update_turn (); State.do' (Build (x,y,Power)) state
+        | `park -> turn#pop ();
+          turn#push "Current Date: May 1890";
+          self#update_turn (); State.do' (Build (x,y,Power)) state); true
         with
         | _ -> false
 
@@ -320,20 +352,44 @@ let setup_ui window =
   let dorm_button = GButton.button ~packing:h_box1#add () in
   (* connects the click to callback *)
   dorm_button#connect#clicked ~callback:
-    (fun () -> b1 := true; b2 := false; bulldozePressed := false;
-      print_endline "house button was pressed") ;
+    (fun () -> dorm_pressed := true; dining_pressed := false;
+      lecture_pressed := false; bulldoze_pressed := false;
+      print_endline "Dorm button was pressed") ;
   (* create box with xpm image and put into button *)
   xpm_label_box ~file:"smslice.xpm" ~text:"Dorm" ~packing:dorm_button#add ();
 
-  let button2 = GButton.button ~packing:h_box1#add () in
-  button2#connect#clicked ~callback:
-    (fun () -> b1 := false; b2 := true; bulldozePressed := false;
-      print_endline "house2 button was pressed");
-  xpm_label_box ~file:"house2.xpm" ~text:"Dining Hall" ~packing:button2#add ();
+  let dining_button = GButton.button ~packing:h_box1#add () in
+  dining_button#connect#clicked ~callback:
+    (fun () -> dorm_pressed := false; dining_pressed := true;
+      lecture_pressed := false; bulldoze_pressed := false;
+      print_endline "Dining button was pressed");
+  xpm_label_box ~file:"house2.xpm" ~text:"Dining Hall" ~packing:dining_button#add ();
+
+  let lecture_button = GButton.button ~packing:h_box1#add () in
+  lecture_button#connect#clicked ~callback:
+    (fun () -> dorm_pressed := false; dining_pressed := false;
+      lecture_pressed := true; bulldoze_pressed := false;
+      print_endline "Lecture button was pressed");
+  xpm_label_box ~file:"forest.xpm" ~text:"Lecture Hall" ~packing:lecture_button#add ();
+
+  let power_button = GButton.button ~packing:h_box1#add () in
+  power_button#connect#clicked ~callback:
+    (fun () -> dorm_pressed := false; dining_pressed := false;
+      lecture_pressed := false; bulldoze_pressed := false;
+      print_endline "Power button was pressed");
+  xpm_label_box ~file:"water.xpm" ~text:"Power Source" ~packing:power_button#add ();
+
+  let park_button = GButton.button ~packing:h_box1#add () in
+  park_button#connect#clicked ~callback:
+    (fun () -> dorm_pressed := false; dining_pressed := false;
+      lecture_pressed := false; bulldoze_pressed := false;
+      print_endline "Park button was pressed");
+  xpm_label_box ~file:"forest.xpm" ~text:"Park" ~packing:park_button#add ();
 
   let bulldoze = GButton.button ~packing:h_box1#add () in
   bulldoze#connect#clicked ~callback:
-    (fun () -> b1 := false; b2 := false; bulldozePressed := true;
+    (fun () -> dorm_pressed := false; dining_pressed := false;
+      lecture_pressed := false; bulldoze_pressed := true;
       print_endline "bulldoze button was pressed");
   xpm_label_box ~file:"bulldozer.xpm" ~text:"Bulldozer" ~packing:bulldoze#add ();
 
