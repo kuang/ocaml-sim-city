@@ -71,7 +71,10 @@ type gamestate = {
 }
 
 (* [init_state] returns the initial state of the game. *)
-val init_state : int-> gamestate
+val init_state : int -> gamestate
+
+(* [init_from_file] returns a state parsed from the file named filename. *)
+val init_from_file : string -> gamestate option
 
 (* [do' command gamestate] applies [command] to [gamestate] and returns a
  * gamestate object representing the new state of game. *)

@@ -116,12 +116,16 @@ class cell ~build ~terrain ?packing ?show () =
     | `none -> `none
     | `house -> `house
      | `house2 -> `house2  in *)
-     let bldimg = match build with
+     let rec bldimg = match build with
      | Empty -> begin match terrain with
        | Clear -> pixclear
        | Forest -> pixforest
        | Water -> pixwater end
      | Dorm -> pixhouse
+     | Dining -> pixhouse2
+     | Lecture -> pixlecture
+     | Power -> pixpower
+     | Park -> pixpark
      | _ -> pixhouse2 in
 
   object (self)
@@ -135,9 +139,12 @@ class cell ~build ~terrain ?packing ?show () =
         building <- bld;
         pm#set_pixmap
           (match bld with
-           | `none -> pixclear
-           | `house -> pixhouse
-           | `house2 -> pixhouse2)
+            | `none -> pixnone
+            | `house -> pixhouse
+            | `house2 -> pixhouse2
+            | `lecture -> pixlecture
+            | `power -> pixpower
+            | `park -> pixpark)
       end
   end
 
@@ -219,7 +226,7 @@ class game ~(frame : #GContainer.container) ~(label : #GMisc.label)
           self#update_turn (); State.do' (Build (x,y,Power)) state
         | `park -> turn#pop ();
           turn#push "Current Date: May 1890";
-          self#update_turn (); State.do' (Build (x,y,Power)) state); true
+          self#update_turn (); State.do' (Build (x,y,Park)) state); true
         with
         | _ -> false
 
@@ -347,6 +354,8 @@ let setup_ui window =
   (* h_box1 will contain the house buttons, is in box1 *)
   let h_box1 = GPack.hbox ~packing:box1#add () in
 
+  let h_box2 = GPack.hbox ~packing:box1#add () in
+
   (* create button and put it in h_box1
    * - [~relief: `NONE] removes shadows around edge of button  *)
   let dorm_button = GButton.button ~packing:h_box1#add () in
@@ -396,8 +405,16 @@ let setup_ui window =
     (fun () -> dorm_pressed := false; dining_pressed := false;
       lecture_pressed := false; power_pressed := false;
       park_pressed := false; bulldoze_pressed := true;
-      print_endline "bulldoze button was pressed");
+      print_endline "Bulldoze button was pressed");
   xpm_label_box ~file:"bulldozer.xpm" ~text:"Bulldozer" ~packing:bulldoze#add ();
+
+  let road_button = GButton.button ~packing:h_box2#add () in
+  road_button#connect#clicked ~callback:
+    (fun () -> dorm_pressed := false; dining_pressed := false;
+      lecture_pressed := false; power_pressed := false;
+      park_pressed := false; bulldoze_pressed := true;
+      print_endline "Road button was pressed");
+  xpm_label_box ~file:"forest.xpm" ~text:"Road" ~packing:road_button#add ();
 
   (* horizontal line *)
   GMisc.separator `HORIZONTAL ~packing:box1#pack () ;
