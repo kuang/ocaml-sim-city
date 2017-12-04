@@ -378,7 +378,7 @@ let setup_ui window =
   let power_button = GButton.button ~packing:h_box1#add () in
   power_button#connect#clicked ~callback:
     (fun () -> dorm_pressed := false; dining_pressed := false;
-      lecture_pressed := false; power_pressed := false;
+      lecture_pressed := false; power_pressed := true;
       park_pressed := false; bulldoze_pressed := false;
       print_endline "Power button was pressed");
   xpm_label_box ~file:"water.xpm" ~text:"Power Source" ~packing:power_button#add ();
@@ -387,7 +387,7 @@ let setup_ui window =
   park_button#connect#clicked ~callback:
     (fun () -> dorm_pressed := false; dining_pressed := false;
       lecture_pressed := false; power_pressed := false;
-      park_pressed := false; bulldoze_pressed := false;
+      park_pressed := true; bulldoze_pressed := false;
       print_endline "Park button was pressed");
   xpm_label_box ~file:"forest.xpm" ~text:"Park" ~packing:park_button#add ();
 
