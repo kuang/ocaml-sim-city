@@ -1,4 +1,4 @@
-type terrain = Water | Forest | Clear | Gorges
+type terrain = Water | Forest | Clear
 
 type disaster = Fire | Blizzard | Prelim
 
@@ -42,6 +42,11 @@ let dorm_init_pop = 20
 (*park happiness*)
 let park_happiness = 10
 let forest_happiness = 10
+
+(* happiness deduction for natural disasters *)
+let fire_happiness = 5
+let blizzard_happiness = 15
+let prelim_happiness = 10
 
 type building_type =
   | Dorm
@@ -160,7 +165,6 @@ let init_from_file filename =
     | '_' -> init_square
     | '~' -> { init_square with terrain = Water }
     | 'T' -> { init_square with terrain = Forest }
-    | 'v' -> { init_square with terrain = Gorges }
     | _   -> raise (Invalid_argument "Unregonized character") in
 (*  try *)
     match open_in filename |> lines with
@@ -203,7 +207,7 @@ let get_rpop row =
 let get_rmain row =
   Array.fold_left (fun (acc:int) b -> b.maintenance_cost + acc) 0 row
 
-(* [get_num st] is the total population of all squares in [grid] *)
+(* [get_num st] is the sum of [f x] over all squares [x] in [grid] *)
 let get_num grid f : int =
   Array.fold_left (fun (acc:int) r -> f r + acc) 0 grid
 
@@ -215,7 +219,7 @@ let update_build happ (b : square) =
       let newpop = b.population + (b.level+1)*happ (* MADE UP NUMBERS*) in {
     b with btype = b.btype;
     level = newpop / 500; (* MADE UP NUMBERS*)
-    maintenance_cost = newpop*40;  (* MADE UP NUMBERS*)
+    maintenance_cost = (newpop / 500)*dorm_mcost;  (* MADE UP NUMBERS*)
     population = newpop;
     }
     end
@@ -291,34 +295,90 @@ let rec place_building (x:int) (y:int) (b:building_type) st : gamestate =
   let curr_square = st.grid.(x).(y) in
   match b with
   | Lecture  | Power  | Dining | Park -> (*no population, multiple squares*)
-    let new_square = {
+    (match curr_square.terrain with
+     | Forest ->
+       let new_square =
+         {
+           curr_square with
+           btype = b;
+           level = 1;
+           terrain = Clear;
+           maintenance_cost = get_mcost b;
+           population = 0;
+         }
+       in let _ =  st.grid.(x).(y) <- new_square in
+       let placed_building_st = place_sections x y (x,y) st in
+       {
+         placed_building_st with
+         happiness = placed_building_st.happiness - forest_happiness;
+       }
+      | _ ->
+      let new_square =
+        {
           curr_square with
           btype = b;
           level = 1;
           maintenance_cost = get_mcost b;
           population = 0;
-        } in let _ =  st.grid.(x).(y) <- new_square in
-    place_sections x y (x,y) st
+        }
+    in let _ =  st.grid.(x).(y) <- new_square in place_sections x y (x,y) st)
   | Dorm  -> (*has population, multiple squares*)
-    let new_square = {
-          curr_square with
-          btype = b;
-          level = 1;
-          maintenance_cost = dorm_mcost;
-          population = dorm_init_pop;
-        } in let _ =  st.grid.(x).(y) <- new_square in
-      place_sections x y (x,y) st
+    (match curr_square.terrain with
+     | Forest ->
+       let new_square =
+         {
+           curr_square with
+           btype = b;
+           level = 1;
+           terrain = Clear;
+           maintenance_cost = get_mcost b;
+           population = dorm_init_pop;
+         }
+       in let _ =  st.grid.(x).(y) <- new_square in
+       let placed_building_st = place_sections x y (x,y) st in
+       {
+         placed_building_st with
+         happiness = placed_building_st.happiness - forest_happiness;
+       }
+     | _ ->
+       let new_square =
+         {
+           curr_square with
+           btype = b;
+           level = 1;
+           maintenance_cost = get_mcost b;
+           population = dorm_init_pop;
+         }
+       in let _ =  st.grid.(x).(y) <- new_square in place_sections x y (x,y) st)
   | Road | Pline | Section _ | Empty -> (*single square, no pop*)
-    let new_square = {
-        curr_square with
-        btype = b;
-        level = 1;
-        maintenance_cost = get_mcost b;
-        population = 0;
-      } in let _ =  st.grid.(x).(y) <- new_square in st
+    (match curr_square.terrain with
+     | Forest ->
+       let new_square =
+         {
+           curr_square with
+           btype = b;
+           level = 1;
+           terrain = Clear;
+           maintenance_cost = get_mcost b;
+           population = 0;
+         }
+       in let _ =  st.grid.(x).(y) <- new_square in
+       {
+         st with
+         happiness = st.happiness - forest_happiness;
+       }
+     | _ ->
+      let new_square = {
+         curr_square with
+         btype = b;
+         level = 1;
+         maintenance_cost = get_mcost b;
+         population = 0;
+       } in let _ =  st.grid.(x).(y) <- new_square in st)
+
 
 (*Helper for place_building- generates the surrounding 8 Section buildings*)
-and place_sections x1 y1 ((x2,y2):int*int) st =
+and place_sections x1 y1 ((x2,y2):int*int) st : gamestate =
   let st1 = place_building (x1-1) (y1-1) (Section(x2,y2)) st in
   let st2 = place_building (x1-1) (y1) (Section(x2,y2)) st1 in
   let st3 = place_building (x1-1) (y1+1) (Section(x2,y2)) st2 in
@@ -338,23 +398,13 @@ and do_build x y (b:building_type) st : gamestate =
   | Some "Invalid funds." -> moneycheck_state
   | _ ->
     let placed_building_st = (
-    match b with
-      | Dorm  | Dining  | Lecture  | Power | Park ->
-      let max_input = ((Array.length st.grid)-2) in
-      if (x<1 || x>max_input || y<1 || y>max_input) then
-        {
-          st with
-          message = Some "Invalid build location.";
-        }
-      else place_building x y b moneycheck_state
-      | _ ->
-        let max_input = ((Array.length st.grid)-1) in
-        if (x<0 || x>max_input || y<0 || y>max_input) then
+      if(is_valid_location x y st b) then
+        place_building x y b moneycheck_state
+      else
           {
             st with
             message = Some "Invalid build location.";
-          }
-        else place_building x y b moneycheck_state) in
+          }) in
     match placed_building_st.message  with
     | Some "Invalid build location." -> placed_building_st
     | _ -> let happiness_update_st = (match b with
@@ -381,6 +431,46 @@ and update_state_money b st =
       message = Some "Invalid funds.";
     }
 
+(*true if st.(x).(y) is a valid build location for a building of type b.*)
+and is_valid_location (x:int) (y:int)(st:gamestate) (b:building_type) : bool =
+  match b with
+  | Dorm  | Dining  | Lecture  | Power | Park -> check_3x3 x y st
+  | _ -> check_1x1 x y b st
+
+(*true if st.(x).(y) is a valid build location for a 3x3 building.*)
+and check_3x3 x y st : bool =
+  let max_input = ((Array.length st.grid)-2) in
+  if (x<1 || x>max_input || y<1 || y>max_input) then false
+  else
+    let g1 = st.grid.(x-1).(y-1) in
+    let g2 = st.grid.(x-1).(y) in
+    let g3 = st.grid.(x-1).(y+1) in
+    let g4 = st.grid.(x).(y-1) in
+    let g5 = st.grid.(x).(y) in
+    let g6 = st.grid.(x).(y+1) in
+    let g7 = st.grid.(x+1).(y-1) in
+    let g8 = st.grid.(x+1).(y) in
+    let g9 = st.grid.(x+1).(y+1) in
+    if g1.btype <> Empty && g1.terrain<>Water then false
+    else if g2.btype <> Empty && g2.terrain<>Water then false
+    else if g3.btype <> Empty && g3.terrain<>Water then false
+    else if g4.btype <> Empty && g4.terrain<>Water then false
+    else if g5.btype <> Empty && g5.terrain<>Water then false
+    else if g6.btype <> Empty && g6.terrain<>Water then false
+    else if g7.btype <> Empty && g7.terrain<>Water then false
+    else if g8.btype <> Empty && g8.terrain<>Water then false
+    else if g9.btype <> Empty && g9.terrain<>Water then false
+    else true
+
+(*true if st.(x).(y) is a valid build location for a 1x1 building. Roads can be built on water, other structures cannot. *)
+and check_1x1 x y b st : bool =
+  let max_in = ((Array.length st.grid)-1) in
+  if (x<0||x>max_in ||y<0|| y>max_in || st.grid.(x).(y).btype<>Empty) then false
+  else
+    match b with
+    | Road | Power | Empty-> true
+    | Section _ -> st.grid.(x).(y).terrain<>Water
+    | _ -> false (*should never happen*)
 (* returns: Updated square "reset" to an empty square with no buildings on it.
  * requires: [sq] is a valid square. *)
 let delete_square sq = {sq with
@@ -466,15 +556,27 @@ let do_tuition n st =
 (* [do_time st] is [st'] after a month has passed. *)
 let do_time st =
   let disaster = gen_disaster (st.happiness*st.time_passed) in
-  let happ = if disaster <> None then st.happiness - 10 else st.happiness in
+  let dishapp = match disaster with
+    | Some Fire -> fire_happiness
+    | Some Blizzard -> blizzard_happiness
+    | Some Prelim -> prelim_happiness
+    | None -> 0 in
+  let happ = max (st.happiness - dishapp) (-100) in
   let grid = update_grid happ st.grid in
   let pop = get_num grid get_rpop in
   let money = if (st.time_passed + 1) mod 12 <> 0
     then st.money - (get_num st.grid get_rmain)
     else st.money + pop*st.tuition in
   let lose = (money < 0 || pop <= 0) && st.time_passed > 11 in
-  let message = if lose then Some "You Lost." else if disaster <> None then
-      Some "A natural disaster occurred!" else None in (* more specfic message? *)
+  let message = if lose then Some "You Lost."
+    else match disaster with
+      | Some Fire -> Some ("A fire occurred! Happiness decreased by "
+                           ^ string_of_int fire_happiness)
+      | Some Blizzard -> Some ("A blizzard occurred! Happiness decreased by "
+                               ^ string_of_int blizzard_happiness)
+      | Some Prelim -> Some ("A prelim occurred! Happiness decreased by "
+                             ^ string_of_int prelim_happiness)
+      | None -> None in
   {
     disaster = disaster;
     lose = lose;
