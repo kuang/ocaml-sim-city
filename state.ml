@@ -48,6 +48,9 @@ let fire_happiness = 5
 let blizzard_happiness = 15
 let prelim_happiness = 10
 
+let init_money = 10000
+let init_tuition = 20
+
 type building_type =
   | Dorm
   | Dining
@@ -143,8 +146,13 @@ let init_state (grid_size:int)= {
   disaster = None;
   lose = false;
   message = Some ("Welcome to the game!");
+<<<<<<< HEAD
+  money = init_money;
+  tuition = init_tuition;
+=======
   money = 50000;
   tuition = 5;
+>>>>>>> 72f7e80f53080168b5a053967137f1e620e37926
   happiness = 50;
   time_passed = 0;
   grid = Array.make_matrix grid_size grid_size init_square;
@@ -177,8 +185,13 @@ let init_from_file (filename : string) =
         disaster = None;
         lose = false;
         message = Some ("Welcome to the game!");
+<<<<<<< HEAD
+        money = init_money;
+        tuition = init_tuition;
+=======
         money = 100000;
         tuition = 5;
+>>>>>>> 72f7e80f53080168b5a053967137f1e620e37926
         happiness = 50;
         time_passed = 0;
         grid =
@@ -189,6 +202,21 @@ let init_from_file (filename : string) =
           Array.of_list
       }
 (*  with _ -> None *)
+
+let get_disaster (st:gamestate) : disaster option = st.disaster
+
+let get_lose (st:gamestate) : bool = st.lose
+
+let get_message (st:gamestate) : string option = st.message
+
+let get_tuition (st:gamestate) : int = st.tuition
+
+let get_happiness (st:gamestate) : int = st.happiness
+
+let get_money (st:gamestate) : int = st.money
+
+let get_time_passed (st:gamestate) : int = st.time_passed
+
 
 (* [gen_disaster] has a small pseudo-random chance of returning [Some disaster],
  * else returns [None] *)
@@ -451,15 +479,15 @@ and check_3x3 x y st : bool =
     let g7 = st.grid.(x+1).(y-1) in
     let g8 = st.grid.(x+1).(y) in
     let g9 = st.grid.(x+1).(y+1) in
-    if g1.btype <> Empty && g1.terrain<>Water then false
-    else if g2.btype <> Empty && g2.terrain<>Water then false
-    else if g3.btype <> Empty && g3.terrain<>Water then false
-    else if g4.btype <> Empty && g4.terrain<>Water then false
-    else if g5.btype <> Empty && g5.terrain<>Water then false
-    else if g6.btype <> Empty && g6.terrain<>Water then false
-    else if g7.btype <> Empty && g7.terrain<>Water then false
-    else if g8.btype <> Empty && g8.terrain<>Water then false
-    else if g9.btype <> Empty && g9.terrain<>Water then false
+    if g1.btype <> Empty && g1.terrain==Water then false
+    else if g2.btype <> Empty && g2.terrain==Water then false
+    else if g3.btype <> Empty && g3.terrain==Water then false
+    else if g4.btype <> Empty && g4.terrain==Water then false
+    else if g5.btype <> Empty && g5.terrain==Water then false
+    else if g6.btype <> Empty && g6.terrain==Water then false
+    else if g7.btype <> Empty && g7.terrain==Water then false
+    else if g8.btype <> Empty && g8.terrain==Water then false
+    else if g9.btype <> Empty && g9.terrain==Water then false
     else true
 
 (*true if st.(x).(y) is a valid build location for a 1x1 building. Roads can be built on water, other structures cannot. *)
