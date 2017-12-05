@@ -553,16 +553,19 @@ let delete_b_sections x y st =
  *  - [st] is the current, valid state
  *  - [sq] is the square at (x,y) *)
 let delete_building x y st sq =
-  if st.money - (get_dcost sq.btype) > 0 then
+  let delete_money = st.money - (get_dcost sq.btype) in
+  if delete_money >= 0 then
     match sq.btype with
     | Dorm  | Dining  | Lecture  | Power ->
       let st' = delete_b_sections x y st in
-      {st' with grid = update_resources st'.grid}
+      {st' with money = delete_money; grid = update_resources st'.grid}
     | Park -> let st' = delete_b_sections x y st in
-      {st' with happiness = st'.happiness - park_happiness}
+      {st' with money = delete_money;
+                happiness = st'.happiness - park_happiness}
     | Road | Pline -> let st' = delete_square_grid x y st sq in
-      {st' with grid = update_resources st'.grid; message = None}
-    | Section _ | Empty -> {st with message = None}
+      {st' with money = delete_money;
+                grid = update_resources st'.grid; message = None}
+    | Section _ | Empty -> {st with money = delete_money; message = None}
   else {st with message = Some "You don't have enough money for that."}
 
 (* returns: [do_delete] is an updated state with building on the square at
