@@ -468,7 +468,7 @@ and check_1x1 x y b st : bool =
   if (x<0||x>max_in ||y<0|| y>max_in || st.grid.(x).(y).btype<>Empty) then false
   else
     match b with
-    | Road | Power | Empty-> true
+    | Road | Pline | Empty-> true
     | Section _ -> st.grid.(x).(y).terrain<>Water
     | _ -> false (*should never happen*)
 (* returns: Updated square "reset" to an empty square with no buildings on it.
