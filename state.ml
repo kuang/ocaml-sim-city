@@ -146,13 +146,8 @@ let init_state (grid_size:int)= {
   disaster = None;
   lose = false;
   message = Some ("Welcome to the game!");
-<<<<<<< HEAD
   money = init_money;
   tuition = init_tuition;
-=======
-  money = 50000;
-  tuition = 5;
->>>>>>> 72f7e80f53080168b5a053967137f1e620e37926
   happiness = 50;
   time_passed = 0;
   grid = Array.make_matrix grid_size grid_size init_square;
@@ -185,13 +180,8 @@ let init_from_file (filename : string) =
         disaster = None;
         lose = false;
         message = Some ("Welcome to the game!");
-<<<<<<< HEAD
         money = init_money;
         tuition = init_tuition;
-=======
-        money = 100000;
-        tuition = 5;
->>>>>>> 72f7e80f53080168b5a053967137f1e620e37926
         happiness = 50;
         time_passed = 0;
         grid =
@@ -423,7 +413,7 @@ and place_sections x1 y1 ((x2,y2):int*int) st : gamestate =
 and do_build x y (b:building_type) st : gamestate =
   let moneycheck_state = update_state_money b st in
   match moneycheck_state.message with
-  | Some "Invalid funds." -> moneycheck_state
+  | Some "Insufficient funds." -> moneycheck_state
   | _ ->
     let placed_building_st = (
       if(is_valid_location x y st b) then
