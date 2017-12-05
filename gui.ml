@@ -311,15 +311,12 @@ let ui_info = "<ui>\
                </menubar>\
                </ui>"
 
-let about_window = GWindow.window ~title:"About" ()
-
 (* [activ_action ac] is the result of clicking [ac]
  * Currently, it simply prints the action *)
 let activ_action ac =
   Printf.printf "Action '%s' activated\n" ac#name ;
   flush stdout;
   match ac#name with
-  | "About" -> about_window#show ()
   | "Quit" -> window#destroy ()
   | "About" -> GToolbox.message_box ~title:"About" about_message
   | _ -> ()
