@@ -4,6 +4,7 @@ open StdLabels
 open GMain
 open Gtk
 open GToolbox
+open GBin
 open State
 
 let initstate = ref (State.init_state 25)
@@ -21,14 +22,44 @@ let bulldoze_pressed = ref false
 
 let welcome_mess = "Welcome to NOT SIM CITY, an open-ended University Simulator
 based on real-life experience at Cornell University!"
-let about_message = "Not Sim City: CS 3110 Final Project"
+let about_message = "Not Sim City: CS 3110 Final Project
+
+KEY FEATURES:
+- Map: square grid on which to build
+- Dorms: The population-carrying buildings. Will not attract students unless
+connected to all resources.
+- Resources: Lecture hall, dining hall, and power plant.
+- Connectors: Power lines form connections to the power plant. Roads form
+connections to lecture and dining halls.
+
+IMPORTANT NUMBERS:
+- Funds: the money you have left. If this drops below 0 after the 10th
+turn, you lose.
+- Population: the number of students attending your university. If this drops
+to 0 after the 10th turn, you lose.
+- Happiness: a measurement of how content your students are. This affects
+the rate at which students enroll in, or drop out of, your university.
+
+HAPPINESS:
+- Building parks increases student happiness.
+- Building over forests decreases student happiness.
+- Natural disasters decrease student happines. There is a small chance every
+month of a natural disaster occurring.
+- Decreasing tuition increases happiness, and increasing tuition
+does the opposite.
+
+FUNDS:
+- Each student pays tuition at the beginning of each year.
+- Each building requires upkeep at the beginning of each month.
+- Building and destroying buildings costs money."
+
 let new_message = "To start a new game, close the current game window and open
 a new game."
 
 module type GridSpec = sig
   type t
   val get : t -> x:int -> y:int -> State.building_type
-  val set : t -> x:int -> y:int -> building:State.building_type -> unit
+  val set : t -> x:int -> y:int -> terrain:State.terrain -> building:State.building_type -> unit
 end
 
 
@@ -38,16 +69,16 @@ module Grid (Spec : GridSpec) = struct
   (* [action board x y building] returns [false] if there is already a building
    * at (x,y), or sets (x,y) to have the pixmap associated with [building] and
    * returns [true] *)
-  let action board ~x ~y ~building =
+  let action board ~x ~y ~terrain ~building =
     if get board ~x ~y <> Empty  && !bulldoze_pressed = false then false
     else begin
-      set board ~x ~y ~building ; true
+      set board ~x ~y ~terrain ~building ; true
     end
 end
 
 
 (* Makes new window with title "Not Sim City" *)
-let window = GWindow.window ~title:"Not Sim City" ()
+let window = GWindow.window ~title:"Not Sim City" ~position:`CENTER ~width:800 ~height:800 ~resizable:true ()
 
 
 (* Create pixmaps of buildings *)
@@ -112,7 +143,8 @@ class cell ~build ~terrain ?packing ?show () =
     val mutable building : State.building_type = Empty
     val pm = GMisc.pixmap bldimg ~packing:button#add ()
     method building = building
-    method set_bld bld =
+    method terrain = terrain
+    method set_bld bld terr =
       if bld <> building then begin
         building <- bld;
         pm#set_pixmap
@@ -124,7 +156,7 @@ class cell ~build ~terrain ?packing ?show () =
            | Park -> pixpark
            | Road -> pixroad
            | Pline -> pixpline
-           | Empty -> begin match terrain with
+           | Empty -> begin match terr with
                | Clear -> pixclear
                | Forest -> pixforest
                | Water -> pixwater end
@@ -137,7 +169,7 @@ module GameGrid = Grid (
   struct
     type t = cell array array
     let get (grid : t) ~x ~y = grid.(x).(y)#building
-    let set (grid : t) ~x ~y ~building = grid.(x).(y)#set_bld building
+    let set (grid : t) ~x ~y ~terrain ~building = grid.(x).(y)#set_bld building terrain
   end
   )
 
@@ -150,7 +182,7 @@ class game ~(frame : #GContainer.container) ~(label : #GMisc.label)
 
   let size = Array.length (!initstate.grid) in
 
-  let table = GPack.table ~columns:size ~rows:size ~packing:(frame#add) () in
+  let table = GPack.table ~columns:size ~rows:size ~packing:(frame#add_with_viewport) () in
 
   object (self)
     val mutable cells =
@@ -191,7 +223,7 @@ class game ~(frame : #GContainer.container) ~(label : #GMisc.label)
       | None -> ()
 
     method update_label () =
-      let p, f = 2, state.money in
+      let p, f = (State.get_num state.grid State.get_rpop), state.money in
       label#set_text (Printf.sprintf "Population: %d \nFunds: $%d " p f)
 
     method update_turn () =
@@ -251,24 +283,19 @@ class game ~(frame : #GContainer.container) ~(label : #GMisc.label)
       | Section (x,y) -> "section"
 
     method play x y =
-      (* if action cells ~x ~y ~building:current_building then *)
       if self#updatestate x y then
         (self#update_label (); self#make_message;
-         turn#pop (); turn#push ("Current Date: "^(string_of_int state.time_passed));
+         turn#pop(); turn#push ("Current Date: "^(State.get_time_passed state));
          for i = max (x-2) 0 to min (x+2) (size-1) do
            for j = max (y-2) 0 to min (y+2) (size-1) do
-             (* for i = 0 to (size-1) do
-                for j = 0 to (size-1) do *)
              let t = (Array.get (Array.get state.grid i) j).terrain in
              let b = (Array.get (Array.get state.grid i) j).btype in
              let bld = match b with
                | Section (x,y) -> (Array.get (Array.get state.grid x) y).btype
                | _ -> b in
              print_endline ((string_of_int i)^(self#btostring bld));
-             action cells i j bld
+             action cells i j t bld
            done done)
-    (* else
-       messages#flash "You cannot build there" ; *)
 
     initializer
       for i = 0 to size-1 do
@@ -278,9 +305,9 @@ class game ~(frame : #GContainer.container) ~(label : #GMisc.label)
           cell#connect#clicked ~callback:(fun () -> self#play i j) (* when clicked, execute [play i j]*)
         done done;
 
-      (*self#update_label ();
-        turn#push "Current Date: April 1865";
-        ()*)
+      self#update_label ();
+        turn#push "Current Date: Apr 1865";
+        ()
   end
 
 
@@ -378,13 +405,13 @@ let setup_ui window =
   ui_m#add_ui_from_string ui_info ;
 
   (* box1 contains the top menu bar thing, and is contained in vbox *)
-  let box1 = GPack.vbox ~packing:vbox#add () in
+  let box1 = GPack.vbox ~packing:vbox#pack () in
   box1#pack (ui_m#get_widget "/MenuBar") ;
 
   (* h_box1 will contain the house buttons, is in box1 *)
-  let h_box1 = GPack.hbox ~packing:box1#add () in
+  let h_box1 = GPack.hbox ~packing:box1#pack ~height:50 () in
 
-  let h_box2 = GPack.hbox ~packing:box1#add () in
+  let h_box2 = GPack.hbox ~packing:box1#pack  ~height:50 () in
 
   (* create button and put it in h_box1
    * - [~relief: `NONE] removes shadows around edge of button  *)
@@ -466,7 +493,9 @@ let setup_ui window =
   GMisc.separator `HORIZONTAL ~packing:box1#pack () ;
 
   (* frame for game *)
-  let frame = GBin.frame ~shadow_type:`IN ~packing:box1#add () in
+  (* let frame = GBin.frame ~shadow_type:`IN ~packing:box1#add () in *)
+  let frame = GBin.scrolled_window ~border_width:10
+      ~hpolicy:`AUTOMATIC ~vpolicy:`AUTOMATIC ~packing:vbox#add () in
 
   (* box at bottom *)
   let hbox = GPack.hbox ~packing:vbox#pack () in
@@ -481,26 +510,36 @@ let setup_ui window =
   filebutton#connect#clicked ~callback:
     (fun () -> (*GToolbox.select_file ~title:"Select"*) ());
 
-  let buttonslist = ["About";"Map from file";"Map from size"] in
+  let buttonslist = ["Instructions";"Map from file";"Map from size"] in
   let sizelist = ["20x20";"30x30";"40x40"] in
 
   let beginbox = GToolbox.question_box ~title:"Welcome!" ~buttons:buttonslist welcome_mess in
 
-  let nextbutton = match beginbox with
-    | 1 -> GToolbox.message_box ~title:"About" about_message
-    | 2 -> (let t = GToolbox.select_file ~title:"File Name" () in
+  let rec nextbutton b = match b with
+    | 1 -> let abt = GToolbox.question_box ~title:"Instructions" ~buttons:buttonslist about_message in
+      nextbutton abt
+    | 2 -> (let t = GToolbox.select_file ~title:"Select File" () in
             match t with
             | Some m -> (initstate := match (State.init_from_file m) with
                 | Some st -> st
-                | None -> GToolbox.message_box ~title:"File Name"
+                | None -> GToolbox.message_box ~title:"Select File"
                             "Cannot load map from file - using default map"; !initstate)
-            | None ->  GToolbox.message_box ~title:"About" "No file selected - using default map")
+            | None ->  GToolbox.message_box ~title:"Select File" "No file selected - using default map")
     | 3 -> (let numbox = GToolbox.question_box ~title:"Choose Size" ~buttons:sizelist "Choose your map size" in
             match numbox with
-            | 1 -> initstate := State.init_state 20
-            | 2 -> initstate := State.init_state 30
-            | 3 -> initstate := State.init_state 40)
-  in
+            | 1 -> (initstate := match (State.init_from_file "default20.txt") with
+                | Some st -> st
+                | None -> GToolbox.message_box ~title:"Choose Size"
+                            "Cannot access 20x20 map - using default map"; !initstate)
+            | 2 -> (initstate := match State.init_from_file "default30.txt" with
+                | Some st -> st
+                | None -> GToolbox.message_box ~title:"Choose Size"
+                            "Cannot access 30x30 map - using default map"; !initstate)
+            | 3 -> (initstate := match State.init_from_file "default40.txt" with
+                | Some st -> st
+                | None -> GToolbox.message_box ~title:"Choose Size"
+                            "Cannot access 40x40 map - using default map"; !initstate))
+  in nextbutton beginbox;
 
   new game ~frame ~label ~statusbar:bar ;
 

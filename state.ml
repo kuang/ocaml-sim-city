@@ -433,7 +433,7 @@ and place_sections x1 y1 ((x2,y2):int*int) st : gamestate =
 
 (*Main logic for building something new. If invalid location, returns [st] but
  *with message field "Invalid build location." If not enough money, returns
- *[st] but with message field "Invalid funds." *)
+ *[st] but with message field "Insufficient funds." *)
 and do_build x y (b:building_type) st : gamestate =
   let moneycheck_state = update_state_money b st in
   match moneycheck_state.message with
@@ -470,7 +470,7 @@ and update_state_money b st =
   else
     {
       st with
-      message = Some "Invalid funds.";
+      message = Some "Insufficient funds.";
     }
 
 (*true if st.(x).(y) is a valid build location for a building of type b.*)
