@@ -180,13 +180,8 @@ let init_from_file (filename : string) =
         disaster = None;
         lose = false;
         message = Some ("Welcome to the game!");
-<<<<<<< HEAD
         money = init_money;
         tuition = init_tuition;
-=======
-        money = 100000;
-        tuition = 5;
->>>>>>> 72f7e80f53080168b5a053967137f1e620e37926
         happiness = 50;
         time_passed = 0;
         grid =
