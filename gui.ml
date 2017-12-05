@@ -22,7 +22,37 @@ let bulldoze_pressed = ref false
 
 let welcome_mess = "Welcome to NOT SIM CITY, an open-ended University Simulator
 based on real-life experience at Cornell University!"
-let about_message = "Not Sim City: CS 3110 Final Project"
+let about_message = "Not Sim City: CS 3110 Final Project
+
+KEY FEATURES:
+- Map: square grid on which to build
+- Dorms: The population-carrying buildings. Will not attract students unless
+connected to all resources.
+- Resources: Lecture hall, dining hall, and power plant.
+- Connectors: Power lines form connections to the power plant. Roads form
+connections to lecture and dining halls.
+
+IMPORTANT NUMBERS
+- Funds: the money you have left. If this drops below 0 after the 10th
+turn, you lose.
+- Population: the number of students attending your university. If this drops
+to 0 after the 10th turn, you lose.
+- Happiness: a measurement of how content your students are. This affects
+the rate at which students enroll in, or drop out of, your university.
+
+HAPPINESS
+- Building parks increases student happiness.
+- Building over forests decreases student happiness.
+- Natural disasters decrease student happines. There is a small chance every
+month of a natural disaster occurring.
+- Decreasing tuition increases happiness, and increasing tuition
+does the opposite.
+
+FUNDS
+- Each student pays tuition at the beginning of each year.
+- Each building requires upkeep at the beginning of each month.
+- Building and destroying buildings costs money."
+
 let new_message = "To start a new game, close the current game window and open
 a new game."
 
@@ -192,7 +222,7 @@ class game ~(frame : #GContainer.container) ~(label : #GMisc.label)
       | None -> ()
 
     method update_label () =
-      let p, f = 2, state.money in
+      let p, f = (State.get_num state.grid State.get_rpop), state.money in
       label#set_text (Printf.sprintf "Population: %d \nFunds: $%d " p f)
 
     method update_turn () =
@@ -255,7 +285,7 @@ class game ~(frame : #GContainer.container) ~(label : #GMisc.label)
       (* if action cells ~x ~y ~building:current_building then *)
       if self#updatestate x y then
         (self#update_label (); self#make_message;
-         turn#pop (); turn#push ("Current Date: "^(string_of_int state.time_passed));
+         turn#pop(); turn#push ("Current Date: "^(State.get_time_passed state));
          for i = max (x-2) 0 to min (x+2) (size-1) do
            for j = max (y-2) 0 to min (y+2) (size-1) do
              (* for i = 0 to (size-1) do
