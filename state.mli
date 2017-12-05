@@ -86,7 +86,7 @@ val get_money : gamestate -> int
 val get_tuition : gamestate -> int
 
 (*exposed getter for time_passed field.*)
-val get_time_passed : gamestate -> int
+val get_time_passed : gamestate -> string
 
 (*exposed getter for disaster field.*)
 val get_disaster : gamestate -> disaster option
