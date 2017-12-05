@@ -23,7 +23,9 @@ let bulldoze_pressed = ref false
 
 let welcome_mess = "Welcome to NOT SIM CITY, an open-ended University Simulator
 based on real-life experience at Cornell University!"
-let about_message = "About"
+let about_message = "Not Sim City: CS 3110 Final Project"
+let new_message = "To start a new game, close the current game window and open
+a new game."
 
 module type GridSpec = sig
   type t
@@ -313,17 +315,15 @@ let ui_info = "<ui>\
                </menubar>\
                </ui>"
 
-let about_window = GWindow.window ~title:"About" ()
-
 (* [activ_action ac] is the result of clicking [ac]
  * Currently, it simply prints the action *)
 let activ_action ac =
   Printf.printf "Action '%s' activated\n" ac#name ;
   flush stdout;
   match ac#name with
-  | "About" -> about_window#show ()
-  | "Quit" -> window#destroy ()
+  | "New" -> GToolbox.message_box ~title:"New Game" new_message
   | "About" -> GToolbox.message_box ~title:"About" about_message
+  | "Quit" -> window#destroy ()
   | _ -> ()
 
 let setup_ui window =
