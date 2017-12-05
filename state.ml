@@ -205,8 +205,32 @@ let get_happiness (st:gamestate) : int = st.happiness
 
 let get_money (st:gamestate) : int = st.money
 
-let get_time_passed (st:gamestate) : int = st.time_passed
+(* returns: [month] is the current month calculated from time passed (number
+ * of turns so far).
+ * requires: turns is the number of turns so far. *)
+let month turns =
+  match (turns + 3) mod 12 with
+  | 0 -> "Jan "
+  | 1 -> "Feb "
+  | 2 -> "Mar "
+  | 3 -> "Apr "
+  | 4 -> "May "
+  | 5 -> "Jun "
+  | 6 -> "Jul "
+  | 7 -> "Aug "
+  | 8 -> "Sep "
+  | 9 -> "Oct "
+  | 10 -> "Nov "
+  | _ -> "Dec "
 
+(* returns: [year] is the current year calculated from time passed (number of
+ * turns so far).
+ * requires: turns is the number of turns so far. *)
+let year turns =
+  string_of_int (((turns + 3) / 12) + 1865)
+
+let get_time_passed (st:gamestate)  =
+  month st.time_passed ^ year st.time_passed
 
 (* [gen_disaster] has a small pseudo-random chance of returning [Some disaster],
  * else returns [None] *)
