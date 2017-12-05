@@ -48,7 +48,11 @@ let fire_happiness = 5
 let blizzard_happiness = 15
 let prelim_happiness = 10
 
+<<<<<<< HEAD
 let init_money = 100000
+=======
+let init_money = 1000000
+>>>>>>> a1d04527bd7a4c6a3bb843255c5ce3ba6ccf43d1
 let init_tuition = 20
 
 type building_type =
@@ -413,7 +417,7 @@ and place_sections x1 y1 ((x2,y2):int*int) st : gamestate =
 and do_build x y (b:building_type) st : gamestate =
   let moneycheck_state = update_state_money b st in
   match moneycheck_state.message with
-  | Some "Invalid funds." -> moneycheck_state
+  | Some "Insufficient funds." -> moneycheck_state
   | _ ->
     let placed_building_st = (
       if(is_valid_location x y st b) then
