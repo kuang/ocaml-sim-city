@@ -514,8 +514,9 @@ let setup_ui window =
 
   let beginbox = GToolbox.question_box ~title:"Welcome!" ~buttons:buttonslist welcome_mess in
 
-  let nextbutton = match beginbox with
-    | 1 -> GToolbox.message_box ~title:"About" about_message
+  let rec nextbutton b = match b with
+    | 1 -> let abt = GToolbox.question_box ~title:"About" ~buttons:buttonslist about_message in
+      nextbutton abt
     | 2 -> (let t = GToolbox.select_file ~title:"File Name" () in
             match t with
             | Some m -> (initstate := match (State.init_from_file m) with
@@ -528,7 +529,7 @@ let setup_ui window =
             | 1 -> initstate := State.init_state 20
             | 2 -> initstate := State.init_state 30
             | 3 -> initstate := State.init_state 40)
-  in
+  in nextbutton beginbox;
 
   new game ~frame ~label ~statusbar:bar ;
 
