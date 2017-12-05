@@ -146,13 +146,8 @@ let init_state (grid_size:int)= {
   disaster = None;
   lose = false;
   message = Some ("Welcome to the game!");
-<<<<<<< HEAD
   money = init_money;
   tuition = init_tuition;
-=======
-  money = 50000;
-  tuition = 5;
->>>>>>> 72f7e80f53080168b5a053967137f1e620e37926
   happiness = 50;
   time_passed = 0;
   grid = Array.make_matrix grid_size grid_size init_square;
