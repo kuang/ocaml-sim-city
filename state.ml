@@ -15,11 +15,11 @@ let empty_mcost = 0
 
 
 (*global build costs*)
-let dorm_bcost = 700
-let dining_bcost = 7000
-let lecture_bcost = 7000
+let dorm_bcost = 10000
+let dining_bcost = 10000
+let lecture_bcost = 10000
 let power_bcost = 500
-let park_bcost = 700
+let park_bcost = 750
 let road_bcost = 50
 let pline_bcost = 50
 let section_bcost = 0
@@ -146,14 +146,19 @@ let init_state (grid_size:int)= {
   disaster = None;
   lose = false;
   message = Some ("Welcome to the game!");
+<<<<<<< HEAD
   money = init_money;
   tuition = init_tuition;
+=======
+  money = 50000;
+  tuition = 5;
+>>>>>>> 72f7e80f53080168b5a053967137f1e620e37926
   happiness = 50;
   time_passed = 0;
   grid = Array.make_matrix grid_size grid_size init_square;
 }
 
-let init_from_file filename =
+let init_from_file (filename : string) =
   let rec lines c =
     try
       let l = input_line c in
@@ -180,8 +185,13 @@ let init_from_file filename =
         disaster = None;
         lose = false;
         message = Some ("Welcome to the game!");
+<<<<<<< HEAD
         money = init_money;
         tuition = init_tuition;
+=======
+        money = 100000;
+        tuition = 5;
+>>>>>>> 72f7e80f53080168b5a053967137f1e620e37926
         happiness = 50;
         time_passed = 0;
         grid =
