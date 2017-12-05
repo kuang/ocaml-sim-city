@@ -73,6 +73,30 @@ type gamestate = {
 (* [init_state] returns the initial state of the game. *)
 val init_state : int-> gamestate
 
+(*creates gamestate given a text file.*)
+val init_from_file : string -> gamestate option
+
+(*exposed getter for happiness field.*)
+val get_happiness : gamestate -> int
+
+(*exposed getter for money field.*)
+val get_money : gamestate -> int
+
+(*exposed getter for tuition field.*)
+val get_tuition : gamestate -> int
+
+(*exposed getter for time_passed field.*)
+val get_time_passed : gamestate -> int
+
+(*exposed getter for disaster field.*)
+val get_disaster : gamestate -> disaster option
+
+(*exposed getter for message field.*)
+val get_message : gamestate -> string option
+
+(*exposed getter for lose field.*)
+val get_lose : gamestate -> bool
+
 (* [do' command gamestate] applies [command] to [gamestate] and returns a
  * gamestate object representing the new state of game. *)
 val do' : command -> gamestate -> gamestate
