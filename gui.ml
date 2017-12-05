@@ -32,7 +32,7 @@ connected to all resources.
 - Connectors: Power lines form connections to the power plant. Roads form
 connections to lecture and dining halls.
 
-IMPORTANT NUMBERS
+IMPORTANT NUMBERS:
 - Funds: the money you have left. If this drops below 0 after the 10th
 turn, you lose.
 - Population: the number of students attending your university. If this drops
@@ -40,7 +40,7 @@ to 0 after the 10th turn, you lose.
 - Happiness: a measurement of how content your students are. This affects
 the rate at which students enroll in, or drop out of, your university.
 
-HAPPINESS
+HAPPINESS:
 - Building parks increases student happiness.
 - Building over forests decreases student happiness.
 - Natural disasters decrease student happines. There is a small chance every
@@ -48,7 +48,7 @@ month of a natural disaster occurring.
 - Decreasing tuition increases happiness, and increasing tuition
 does the opposite.
 
-FUNDS
+FUNDS:
 - Each student pays tuition at the beginning of each year.
 - Each building requires upkeep at the beginning of each month.
 - Building and destroying buildings costs money."
@@ -78,7 +78,7 @@ end
 
 
 (* Makes new window with title "Not Sim City" *)
-let window = GWindow.window ~title:"Not Sim City" ~width:800 ~height:800 ~resizable:true ()
+let window = GWindow.window ~title:"Not Sim City" ~position:`CENTER ~width:800 ~height:800 ~resizable:true ()
 
 
 (* Create pixmaps of buildings *)
@@ -305,7 +305,7 @@ class game ~(frame : #GContainer.container) ~(label : #GMisc.label)
         done done;
 
       self#update_label ();
-        turn#push "Current Date: April 1865";
+        turn#push "Current Date: Apr 1865";
         ()
   end
 
@@ -509,21 +509,21 @@ let setup_ui window =
   filebutton#connect#clicked ~callback:
     (fun () -> (*GToolbox.select_file ~title:"Select"*) ());
 
-  let buttonslist = ["About";"Map from file";"Map from size"] in
+  let buttonslist = ["Instructions";"Map from file";"Map from size"] in
   let sizelist = ["20x20";"30x30";"40x40"] in
 
   let beginbox = GToolbox.question_box ~title:"Welcome!" ~buttons:buttonslist welcome_mess in
 
   let rec nextbutton b = match b with
-    | 1 -> let abt = GToolbox.question_box ~title:"About" ~buttons:buttonslist about_message in
+    | 1 -> let abt = GToolbox.question_box ~title:"Instructions" ~buttons:buttonslist about_message in
       nextbutton abt
-    | 2 -> (let t = GToolbox.select_file ~title:"File Name" () in
+    | 2 -> (let t = GToolbox.select_file ~title:"Select File" () in
             match t with
             | Some m -> (initstate := match (State.init_from_file m) with
                 | Some st -> st
-                | None -> GToolbox.message_box ~title:"File Name"
+                | None -> GToolbox.message_box ~title:"Select File"
                             "Cannot load map from file - using default map"; !initstate)
-            | None ->  GToolbox.message_box ~title:"About" "No file selected - using default map")
+            | None ->  GToolbox.message_box ~title:"Select File" "No file selected - using default map")
     | 3 -> (let numbox = GToolbox.question_box ~title:"Choose Size" ~buttons:sizelist "Choose your map size" in
             match numbox with
             | 1 -> initstate := State.init_state 20
