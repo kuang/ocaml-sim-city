@@ -4,6 +4,7 @@ open StdLabels
 open GMain
 open Gtk
 open GToolbox
+open GBin
 open State
 
 let initstate = ref (State.init_state 25)
@@ -47,7 +48,7 @@ end
 
 
 (* Makes new window with title "Not Sim City" *)
-let window = GWindow.window ~title:"Not Sim City" ()
+let window = GWindow.window ~title:"Not Sim City" ~width:800 ~height:800 ~resizable:true ()
 
 
 (* Create pixmaps of buildings *)
@@ -150,7 +151,7 @@ class game ~(frame : #GContainer.container) ~(label : #GMisc.label)
 
   let size = Array.length (!initstate.grid) in
 
-  let table = GPack.table ~columns:size ~rows:size ~packing:(frame#add) () in
+  let table = GPack.table ~columns:size ~rows:size ~packing:(frame#add_with_viewport) () in
 
   object (self)
     val mutable cells =
@@ -378,13 +379,13 @@ let setup_ui window =
   ui_m#add_ui_from_string ui_info ;
 
   (* box1 contains the top menu bar thing, and is contained in vbox *)
-  let box1 = GPack.vbox ~packing:vbox#add () in
+  let box1 = GPack.vbox ~packing:vbox#pack () in
   box1#pack (ui_m#get_widget "/MenuBar") ;
 
   (* h_box1 will contain the house buttons, is in box1 *)
-  let h_box1 = GPack.hbox ~packing:box1#add () in
+  let h_box1 = GPack.hbox ~packing:box1#pack ~height:50 () in
 
-  let h_box2 = GPack.hbox ~packing:box1#add () in
+  let h_box2 = GPack.hbox ~packing:box1#pack  ~height:50 () in
 
   (* create button and put it in h_box1
    * - [~relief: `NONE] removes shadows around edge of button  *)
@@ -466,7 +467,9 @@ let setup_ui window =
   GMisc.separator `HORIZONTAL ~packing:box1#pack () ;
 
   (* frame for game *)
-  let frame = GBin.frame ~shadow_type:`IN ~packing:box1#add () in
+  (* let frame = GBin.frame ~shadow_type:`IN ~packing:box1#add () in *)
+  let frame = GBin.scrolled_window ~border_width:10
+      ~hpolicy:`AUTOMATIC ~vpolicy:`AUTOMATIC ~packing:vbox#add () in
 
   (* box at bottom *)
   let hbox = GPack.hbox ~packing:vbox#pack () in
