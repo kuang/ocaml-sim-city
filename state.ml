@@ -433,7 +433,7 @@ and place_sections x1 y1 ((x2,y2):int*int) st : gamestate =
 
 (*Main logic for building something new. If invalid location, returns [st] but
  *with message field "Invalid build location." If not enough money, returns
- *[st] but with message field "Invalid funds." *)
+ *[st] but with message field "Insufficient funds." *)
 and do_build x y (b:building_type) st : gamestate =
   let moneycheck_state = update_state_money b st in
   match moneycheck_state.message with
@@ -461,7 +461,7 @@ and do_build x y (b:building_type) st : gamestate =
 
 and update_state_money b st =
   let bcost = get_bcost b in
-  if bcost<st.money then
+  if bcost<=st.money then
     {
       st with
       money = (st.money-bcost);
@@ -470,7 +470,7 @@ and update_state_money b st =
   else
     {
       st with
-      message = Some "Invalid funds.";
+      message = Some "Insufficient funds.";
     }
 
 (*true if st.(x).(y) is a valid build location for a building of type b.*)
@@ -493,15 +493,15 @@ and check_3x3 x y st : bool =
     let g7 = st.grid.(x+1).(y-1) in
     let g8 = st.grid.(x+1).(y) in
     let g9 = st.grid.(x+1).(y+1) in
-    if g1.btype <> Empty && g1.terrain==Water then false
-    else if g2.btype <> Empty && g2.terrain==Water then false
-    else if g3.btype <> Empty && g3.terrain==Water then false
-    else if g4.btype <> Empty && g4.terrain==Water then false
-    else if g5.btype <> Empty && g5.terrain==Water then false
-    else if g6.btype <> Empty && g6.terrain==Water then false
-    else if g7.btype <> Empty && g7.terrain==Water then false
-    else if g8.btype <> Empty && g8.terrain==Water then false
-    else if g9.btype <> Empty && g9.terrain==Water then false
+    if g1.btype<>Empty || g1.terrain==Water then false
+    else if g2.btype<>Empty || g2.terrain==Water then false
+    else if g3.btype<>Empty || g3.terrain==Water then false
+    else if g4.btype<>Empty || g4.terrain==Water then false
+    else if g5.btype<>Empty || g5.terrain==Water then false
+    else if g6.btype<>Empty || g6.terrain==Water then false
+    else if g7.btype<>Empty || g7.terrain==Water then false
+    else if g8.btype<>Empty || g8.terrain==Water then false
+    else if g9.btype<>Empty || g9.terrain==Water then false
     else true
 
 (*true if st.(x).(y) is a valid build location for a 1x1 building. Roads can be built on water, other structures cannot. *)
