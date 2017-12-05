@@ -3,11 +3,10 @@
 open StdLabels
 open GMain
 open Gtk
+open GToolbox
 open State
 
-let initstate = match State.init_from_file "map.txt" with
-  | Some state -> state
-  | None -> State.init_state 25
+let initstate = ref (State.init_state 25)
 
 let _ = GtkMain.Main.init ()
 
@@ -22,9 +21,12 @@ let road_pressed = ref false
 let pline_pressed = ref false
 let bulldoze_pressed = ref false
 
+let welcome_mess = "Welcome to NOT SIM CITY, an open-ended University Simulator
+based on real-life experience at Cornell University!"
+let about_message = "About"
+
 module type GridSpec = sig
   type t
-  val size : int
   val get : t -> x:int -> y:int -> State.building_type
   val set : t -> x:int -> y:int -> building:State.building_type -> unit
 end
@@ -32,11 +34,6 @@ end
 
 module Grid (Spec : GridSpec) = struct
   open Spec
-  let size = size
-
-  (* [on_grid x y] is [true] if (x,y) is on the game grid, [false otherwise] *)
-  let on_grid x y =
-    x >= 0 && x < size && y >= 0 && y < size
 
   (* [action board x y building] returns [false] if there is already a building
    * at (x,y), or sets (x,y) to have the pixmap associated with [building] and
@@ -44,18 +41,6 @@ module Grid (Spec : GridSpec) = struct
   let action board ~x ~y ~building =
     if get board ~x ~y <> Empty  && !bulldoze_pressed = false then false
     else begin
-      (* if !dorm_pressed then
-        set board ~x ~y ~building:(`dorm :> building)
-      else if !dining_pressed then
-        set board ~x ~y ~building:(`dining :> building)
-      else if !lecture_pressed then
-        set board ~x ~y ~building:(`lecture:> building)
-      else if !power_pressed then
-        set board ~x ~y ~building:(`power :> building)
-      else if !park_pressed then
-        set board ~x ~y ~building:(`park :> building)
-      else
-         set board ~x ~y ~building:(`none :> building)*)
       set board ~x ~y ~building ; true
     end
 end
@@ -67,7 +52,6 @@ let window = GWindow.window ~title:"Not Sim City" ()
 
 (* Create pixmaps of buildings *)
 let pixnone =
-  (* empty *)
   GDraw.pixmap ~window ~width:20 ~height:20 ~mask:true ()
 let pixwater =
   GDraw.pixmap_from_xpm ~file:"water.xpm" ()
@@ -76,10 +60,6 @@ let pixclear =
 let pixforest =
   GDraw.pixmap_from_xpm ~file:"forest.xpm" ()
 
-let pixhouse =
-  GDraw.pixmap_from_xpm ~file:"smslice.xpm" ()
-let pixhouse2 =
-  GDraw.pixmap_from_xpm ~file:"house2.xpm" ()
 let pixdorm =
   GDraw.pixmap_from_xpm ~file:"dorm.xpm" ()
 let pixdining =
@@ -156,7 +136,6 @@ class cell ~build ~terrain ?packing ?show () =
 module GameGrid = Grid (
   struct
     type t = cell array array
-    let size = 25
     let get (grid : t) ~x ~y = grid.(x).(y)#building
     let set (grid : t) ~x ~y ~building = grid.(x).(y)#set_bld building
   end
@@ -169,6 +148,8 @@ open GameGrid
 class game ~(frame : #GContainer.container) ~(label : #GMisc.label)
     ~(statusbar : #GMisc.statusbar) =
 
+  let size = Array.length (!initstate.grid) in
+
   let table = GPack.table ~columns:size ~rows:size ~packing:(frame#add) () in
 
   object (self)
@@ -176,8 +157,8 @@ class game ~(frame : #GContainer.container) ~(label : #GMisc.label)
       Array.init size
         ~f:(fun i -> Array.init size
                ~f:(fun j ->
-                   let t = (Array.get (Array.get initstate.grid i) j).terrain in
-                   let b = (Array.get (Array.get initstate.grid i) j).btype in
+                   let t = (Array.get (Array.get !initstate.grid i) j).terrain in
+                   let b = (Array.get (Array.get !initstate.grid i) j).btype in
                     new cell ~build:b ~terrain:t ~packing:(table#attach ~top:i ~left:j) ()))
 
     (* for the text displayed in bottom right *)
@@ -193,7 +174,7 @@ class game ~(frame : #GContainer.container) ~(label : #GMisc.label)
     method table = table
     val mutable current_building = Dorm
     val mutable turnnum = 1
-    val mutable state = initstate
+    val mutable state = !initstate
 
     (* end of game *)
     method finish () =
@@ -203,6 +184,11 @@ class game ~(frame : #GContainer.container) ~(label : #GMisc.label)
         (if w <= 0 then "Population 0" else
          if b < 0 then "Out of Funds" else
            "You Lost."); ()
+
+    method make_message =
+      match state.message with
+      | Some m -> GToolbox.message_box ~title:"Message" m
+      | None -> ()
 
     method update_label () =
       let p, f = 2, state.money in
@@ -266,7 +252,9 @@ class game ~(frame : #GContainer.container) ~(label : #GMisc.label)
 
     method play x y =
       (* if action cells ~x ~y ~building:current_building then *)
-      if self#updatestate x y then (self#update_label ();
+      if self#updatestate x y then
+        (self#update_label (); self#make_message;
+        turn#pop (); turn#push ("Current Date: "^(string_of_int state.time_passed));
         for i = max (x-2) 0 to min (x+2) (size-1) do
           for j = max (y-2) 0 to min (y+2) (size-1) do
             (* for i = 0 to (size-1) do
@@ -335,6 +323,7 @@ let activ_action ac =
   match ac#name with
   | "About" -> about_window#show ()
   | "Quit" -> window#destroy ()
+  | "About" -> GToolbox.message_box ~title:"About" about_message
   | _ -> ()
 
 let setup_ui window =
@@ -489,6 +478,31 @@ let setup_ui window =
   let frame2 = GBin.frame ~shadow_type:`IN ~packing:hbox#pack () in
   (* label displaying population and money *)
   let label = GMisc.label ~justify:`LEFT ~xpad:5 ~xalign:0.0 ~packing:frame2#add () in
+
+  let filebutton = GButton.button () in
+  filebutton#connect#clicked ~callback:
+    (fun () -> (*GToolbox.select_file ~title:"Select"*) ());
+
+  let buttonslist = ["About";"Map from file";"Map from size"] in
+  let sizelist = ["20x20";"30x30";"40x40"] in
+
+  let beginbox = GToolbox.question_box ~title:"Welcome!" ~buttons:buttonslist welcome_mess in
+
+  let nextbutton = match beginbox with
+    | 1 -> GToolbox.message_box ~title:"About" about_message
+    | 2 -> (let t = GToolbox.select_file ~title:"File Name" () in
+      match t with
+      | Some m -> (initstate := match (State.init_from_file m) with
+          | Some st -> st
+          | None -> GToolbox.message_box ~title:"File Name"
+            "Cannot load map from file - using default map"; !initstate)
+      | None ->  GToolbox.message_box ~title:"About" "No file selected - using default map")
+    | 3 -> (let numbox = GToolbox.question_box ~title:"Choose Size" ~buttons:sizelist "Choose your map size" in
+            match numbox with
+            | 1 -> initstate := State.init_state 20
+            | 2 -> initstate := State.init_state 30
+            | 3 -> initstate := State.init_state 40)
+  in
 
   new game ~frame ~label ~statusbar:bar ;
 
