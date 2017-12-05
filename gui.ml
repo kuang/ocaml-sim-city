@@ -282,14 +282,11 @@ class game ~(frame : #GContainer.container) ~(label : #GMisc.label)
       | Section (x,y) -> "section"
 
     method play x y =
-      (* if action cells ~x ~y ~building:current_building then *)
       if self#updatestate x y then
         (self#update_label (); self#make_message;
          turn#pop(); turn#push ("Current Date: "^(State.get_time_passed state));
          for i = max (x-2) 0 to min (x+2) (size-1) do
            for j = max (y-2) 0 to min (y+2) (size-1) do
-             (* for i = 0 to (size-1) do
-                for j = 0 to (size-1) do *)
              let t = (Array.get (Array.get state.grid i) j).terrain in
              let b = (Array.get (Array.get state.grid i) j).btype in
              let bld = match b with
@@ -298,8 +295,6 @@ class game ~(frame : #GContainer.container) ~(label : #GMisc.label)
              print_endline ((string_of_int i)^(self#btostring bld));
              action cells i j bld
            done done)
-    (* else
-       messages#flash "You cannot build there" ; *)
 
     initializer
       for i = 0 to size-1 do
@@ -309,9 +304,9 @@ class game ~(frame : #GContainer.container) ~(label : #GMisc.label)
           cell#connect#clicked ~callback:(fun () -> self#play i j) (* when clicked, execute [play i j]*)
         done done;
 
-      (*self#update_label ();
+      self#update_label ();
         turn#push "Current Date: April 1865";
-        ()*)
+        ()
   end
 
 
