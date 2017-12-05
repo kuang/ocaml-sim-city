@@ -59,7 +59,7 @@ a new game."
 module type GridSpec = sig
   type t
   val get : t -> x:int -> y:int -> State.building_type
-  val set : t -> x:int -> y:int -> building:State.building_type -> unit
+  val set : t -> x:int -> y:int -> terrain:State.terrain -> building:State.building_type -> unit
 end
 
 
@@ -69,10 +69,10 @@ module Grid (Spec : GridSpec) = struct
   (* [action board x y building] returns [false] if there is already a building
    * at (x,y), or sets (x,y) to have the pixmap associated with [building] and
    * returns [true] *)
-  let action board ~x ~y ~building =
+  let action board ~x ~y ~terrain ~building =
     if get board ~x ~y <> Empty  && !bulldoze_pressed = false then false
     else begin
-      set board ~x ~y ~building ; true
+      set board ~x ~y ~terrain ~building ; true
     end
 end
 
@@ -143,7 +143,8 @@ class cell ~build ~terrain ?packing ?show () =
     val mutable building : State.building_type = Empty
     val pm = GMisc.pixmap bldimg ~packing:button#add ()
     method building = building
-    method set_bld bld =
+    method terrain = terrain
+    method set_bld bld terr =
       if bld <> building then begin
         building <- bld;
         pm#set_pixmap
@@ -155,7 +156,7 @@ class cell ~build ~terrain ?packing ?show () =
            | Park -> pixpark
            | Road -> pixroad
            | Pline -> pixpline
-           | Empty -> begin match terrain with
+           | Empty -> begin match terr with
                | Clear -> pixclear
                | Forest -> pixforest
                | Water -> pixwater end
@@ -168,7 +169,7 @@ module GameGrid = Grid (
   struct
     type t = cell array array
     let get (grid : t) ~x ~y = grid.(x).(y)#building
-    let set (grid : t) ~x ~y ~building = grid.(x).(y)#set_bld building
+    let set (grid : t) ~x ~y ~terrain ~building = grid.(x).(y)#set_bld building terrain
   end
   )
 
@@ -293,7 +294,7 @@ class game ~(frame : #GContainer.container) ~(label : #GMisc.label)
                | Section (x,y) -> (Array.get (Array.get state.grid x) y).btype
                | _ -> b in
              print_endline ((string_of_int i)^(self#btostring bld));
-             action cells i j bld
+             action cells i j t bld
            done done)
 
     initializer
@@ -526,9 +527,18 @@ let setup_ui window =
             | None ->  GToolbox.message_box ~title:"Select File" "No file selected - using default map")
     | 3 -> (let numbox = GToolbox.question_box ~title:"Choose Size" ~buttons:sizelist "Choose your map size" in
             match numbox with
-            | 1 -> initstate := State.init_state 20
-            | 2 -> initstate := State.init_state 30
-            | 3 -> initstate := State.init_state 40)
+            | 1 -> (initstate := match (State.init_from_file "default20.txt") with
+                | Some st -> st
+                | None -> GToolbox.message_box ~title:"Choose Size"
+                            "Cannot access 20x20 map - using default map"; !initstate)
+            | 2 -> (initstate := match State.init_from_file "default30.txt" with
+                | Some st -> st
+                | None -> GToolbox.message_box ~title:"Choose Size"
+                            "Cannot access 30x30 map - using default map"; !initstate)
+            | 3 -> (initstate := match State.init_from_file "default40.txt" with
+                | Some st -> st
+                | None -> GToolbox.message_box ~title:"Choose Size"
+                            "Cannot access 40x40 map - using default map"; !initstate))
   in nextbutton beginbox;
 
   new game ~frame ~label ~statusbar:bar ;
