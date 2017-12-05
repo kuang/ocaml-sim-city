@@ -10,8 +10,6 @@ let initstate = ref (State.init_state 25)
 
 let _ = GtkMain.Main.init ()
 
-type building = [`none|`dorm|`dining|`lecture|`power|`park|`road|`pline]
-
 let dorm_pressed = ref true
 let dining_pressed = ref false
 let lecture_pressed = ref false
@@ -88,23 +86,23 @@ let xpm_label_box ~file ~text ~packing () =
   GMisc.pixmap pixmap ~packing:(box#pack ~padding:3) ();
   GMisc.label ~text ~packing:(box#pack ~padding:3) ()
 
-  (* cell: a button with a pixmap on it *)
+(* cell: a button with a pixmap on it *)
 class cell ~build ~terrain ?packing ?show () =
   let button = GButton.button ?packing ?show ~relief:`NONE () in
 
-   let bldimg = match build with
-   | Empty -> begin match terrain with
-     | Clear -> pixclear
-     | Forest -> pixforest
-     | Water -> pixwater end
-   | Dorm -> pixdorm
-   | Dining -> pixdining
-   | Lecture -> pixlecture
-   | Power -> pixpower
-   | Park -> pixpark
-   | Road -> pixroad
-   | Pline -> pixpline
-   | _ -> pixdining in
+  let bldimg = match build with
+    | Empty -> begin match terrain with
+        | Clear -> pixclear
+        | Forest -> pixforest
+        | Water -> pixwater end
+    | Dorm -> pixdorm
+    | Dining -> pixdining
+    | Lecture -> pixlecture
+    | Power -> pixpower
+    | Park -> pixpark
+    | Road -> pixroad
+    | Pline -> pixpline
+    | _ -> pixdining in
 
   object (self)
     inherit GObj.widget button#as_widget
@@ -159,7 +157,7 @@ class game ~(frame : #GContainer.container) ~(label : #GMisc.label)
                ~f:(fun j ->
                    let t = (Array.get (Array.get !initstate.grid i) j).terrain in
                    let b = (Array.get (Array.get !initstate.grid i) j).btype in
-                    new cell ~build:b ~terrain:t ~packing:(table#attach ~top:i ~left:j) ()))
+                   new cell ~build:b ~terrain:t ~packing:(table#attach ~top:i ~left:j) ()))
 
     (* for the text displayed in bottom right *)
     val label = label
@@ -209,66 +207,66 @@ class game ~(frame : #GContainer.container) ~(label : #GMisc.label)
         else Empty
 
     method updatestate x y : bool =
-        try (self#update_build (); state <- match current_building with
-        | Empty -> turn#pop ();
-          turn#push "Current Date: Dec 2017";
-          self#update_turn (); State.do' (Delete (x,y)) state
-        | Dorm -> turn#pop ();
-          turn#push "Current Date: May 2020";
-          self#update_turn (); State.do' (Build (x,y,Dorm)) state
-        | Dining -> turn#pop ();
-          turn#push "Current Date: May 1860";
-          self#update_turn (); State.do' (Build (x,y,Dining)) state
-        | Lecture -> turn#pop ();
-          turn#push "Current Date: May 1870";
-          self#update_turn (); State.do' (Build (x,y,Lecture)) state
-        | Power -> turn#pop ();
-          turn#push "Current Date: May 1880";
-          self#update_turn (); State.do' (Build (x,y,Power)) state
-        | Park -> turn#pop ();
-          turn#push "Current Date: May 1890";
-          self#update_turn (); State.do' (Build (x,y,Park)) state
-        | Road -> turn#pop ();
-          turn#push "Current Date: May 1900";
-          self#update_turn (); State.do' (Build (x,y,Road)) state
-        | Pline -> turn#pop ();
-          turn#push "Current Date: May 1910";
-          self#update_turn (); State.do' (Build (x,y,Pline)) state
-        | _ -> state); true
-        with
-        | _ -> false
+      try (self#update_build (); state <- match current_building with
+          | Empty -> turn#pop ();
+            turn#push "Current Date: Dec 2017";
+            self#update_turn (); State.do' (Delete (x,y)) state
+          | Dorm -> turn#pop ();
+            turn#push "Current Date: May 2020";
+            self#update_turn (); State.do' (Build (x,y,Dorm)) state
+          | Dining -> turn#pop ();
+            turn#push "Current Date: May 1860";
+            self#update_turn (); State.do' (Build (x,y,Dining)) state
+          | Lecture -> turn#pop ();
+            turn#push "Current Date: May 1870";
+            self#update_turn (); State.do' (Build (x,y,Lecture)) state
+          | Power -> turn#pop ();
+            turn#push "Current Date: May 1880";
+            self#update_turn (); State.do' (Build (x,y,Power)) state
+          | Park -> turn#pop ();
+            turn#push "Current Date: May 1890";
+            self#update_turn (); State.do' (Build (x,y,Park)) state
+          | Road -> turn#pop ();
+            turn#push "Current Date: May 1900";
+            self#update_turn (); State.do' (Build (x,y,Road)) state
+          | Pline -> turn#pop ();
+            turn#push "Current Date: May 1910";
+            self#update_turn (); State.do' (Build (x,y,Pline)) state
+          | _ -> state); true
+      with
+      | _ -> false
 
-        method btostring btype =
-          match btype with
-              | Empty -> "empty"
-              | Dorm -> "dorm"
-              | Lecture -> "lecture"
-              | Power -> "power"
-              | Dining -> "dining"
-              | Park -> "park"
-              | Road -> "road"
-              | Pline -> "pline"
-              | Section (x,y) -> "section"
+    method btostring btype =
+      match btype with
+      | Empty -> "empty"
+      | Dorm -> "dorm"
+      | Lecture -> "lecture"
+      | Power -> "power"
+      | Dining -> "dining"
+      | Park -> "park"
+      | Road -> "road"
+      | Pline -> "pline"
+      | Section (x,y) -> "section"
 
     method play x y =
       (* if action cells ~x ~y ~building:current_building then *)
       if self#updatestate x y then
         (self#update_label (); self#make_message;
-        turn#pop (); turn#push ("Current Date: "^(string_of_int state.time_passed));
-        for i = max (x-2) 0 to min (x+2) (size-1) do
-          for j = max (y-2) 0 to min (y+2) (size-1) do
-            (* for i = 0 to (size-1) do
-               for j = 0 to (size-1) do *)
-            let t = (Array.get (Array.get state.grid i) j).terrain in
-            let b = (Array.get (Array.get state.grid i) j).btype in
-            let bld = match b with
-              | Section (x,y) -> (Array.get (Array.get state.grid x) y).btype
-              | _ -> b in
-            print_endline ((string_of_int i)^(self#btostring bld));
-            action cells i j bld
-          done done)
-      (* else
-        messages#flash "You cannot build there" ; *)
+         turn#pop (); turn#push ("Current Date: "^(string_of_int state.time_passed));
+         for i = max (x-2) 0 to min (x+2) (size-1) do
+           for j = max (y-2) 0 to min (y+2) (size-1) do
+             (* for i = 0 to (size-1) do
+                for j = 0 to (size-1) do *)
+             let t = (Array.get (Array.get state.grid i) j).terrain in
+             let b = (Array.get (Array.get state.grid i) j).btype in
+             let bld = match b with
+               | Section (x,y) -> (Array.get (Array.get state.grid x) y).btype
+               | _ -> b in
+             print_endline ((string_of_int i)^(self#btostring bld));
+             action cells i j bld
+           done done)
+    (* else
+       messages#flash "You cannot build there" ; *)
 
     initializer
       for i = 0 to size-1 do
@@ -279,7 +277,7 @@ class game ~(frame : #GContainer.container) ~(label : #GMisc.label)
         done done;
 
       (*self#update_label ();
-      turn#push "Current Date: April 1865";
+        turn#push "Current Date: April 1865";
         ()*)
   end
 
@@ -491,12 +489,12 @@ let setup_ui window =
   let nextbutton = match beginbox with
     | 1 -> GToolbox.message_box ~title:"About" about_message
     | 2 -> (let t = GToolbox.select_file ~title:"File Name" () in
-      match t with
-      | Some m -> (initstate := match (State.init_from_file m) with
-          | Some st -> st
-          | None -> GToolbox.message_box ~title:"File Name"
-            "Cannot load map from file - using default map"; !initstate)
-      | None ->  GToolbox.message_box ~title:"About" "No file selected - using default map")
+            match t with
+            | Some m -> (initstate := match (State.init_from_file m) with
+                | Some st -> st
+                | None -> GToolbox.message_box ~title:"File Name"
+                            "Cannot load map from file - using default map"; !initstate)
+            | None ->  GToolbox.message_box ~title:"About" "No file selected - using default map")
     | 3 -> (let numbox = GToolbox.question_box ~title:"Choose Size" ~buttons:sizelist "Choose your map size" in
             match numbox with
             | 1 -> initstate := State.init_state 20
