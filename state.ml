@@ -48,7 +48,7 @@ let fire_happiness = 5
 let blizzard_happiness = 15
 let prelim_happiness = 10
 
-let init_money = 10000
+let init_money = 1000000
 let init_tuition = 20
 
 type building_type =
