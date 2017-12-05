@@ -76,12 +76,6 @@ val init_state : int -> gamestate
 (* [init_from_file] returns a state parsed from the file named filename. *)
 val init_from_file : string -> gamestate option
 
-(* [init_from_file] generates a game state from a text file. *)
-val init_from_file : string -> gamestate option
-
-(*creates gamestate given a text file.*)
-val init_from_file : string -> gamestate option
-
 (*exposed getter for happiness field.*)
 val get_happiness : gamestate -> int
 
@@ -102,6 +96,12 @@ val get_message : gamestate -> string option
 
 (*exposed getter for lose field.*)
 val get_lose : gamestate -> bool
+
+(* [get_rpop row] returns the total population of all squares in [row]. *)
+val get_rpop : square array -> int
+
+(* [get_num st f] is the sum of [f x] over all squares [x] in [st.grid] *)
+val get_num : square array array -> (square array -> int) -> int
 
 (* [do' command gamestate] applies [command] to [gamestate] and returns a
  * gamestate object representing the new state of game. *)

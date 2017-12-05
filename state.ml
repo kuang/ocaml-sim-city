@@ -48,7 +48,7 @@ let fire_happiness = 5
 let blizzard_happiness = 15
 let prelim_happiness = 10
 
-let init_money = 10000
+let init_money = 1000000
 let init_tuition = 20
 
 type building_type =
@@ -486,7 +486,7 @@ and check_1x1 x y b st : bool =
   if (x<0||x>max_in ||y<0|| y>max_in || st.grid.(x).(y).btype<>Empty) then false
   else
     match b with
-    | Road | Power | Empty-> true
+    | Road | Pline | Empty-> true
     | Section _ -> st.grid.(x).(y).terrain<>Water
     | _ -> false (*should never happen*)
 (* returns: Updated square "reset" to an empty square with no buildings on it.
