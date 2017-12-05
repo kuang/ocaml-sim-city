@@ -205,17 +205,7 @@ class game ~(frame : #GContainer.container) ~(label : #GMisc.label)
     method grid = cells
     method table = table
     val mutable current_building = Dorm
-    val mutable turnnum = 1
     val mutable state = !initstate
-
-    (* end of game *)
-    method finish () =
-      turn#pop ();
-      let w, b = 0, 400 in
-      turn#push
-        (if w <= 0 then "Population 0" else
-         if b < 0 then "Out of Funds" else
-           "You Lost."); ()
 
     method make_message =
       match state.message with
@@ -225,9 +215,6 @@ class game ~(frame : #GContainer.container) ~(label : #GMisc.label)
     method update_label () =
       let p, f = (State.get_num state.grid State.get_rpop), state.money in
       label#set_text (Printf.sprintf "Population: %d \nFunds: $%d " p f)
-
-    method update_turn () =
-      turnnum <- turnnum +  1
 
     method update_build () =
       current_building <- if !dorm_pressed then Dorm
@@ -244,28 +231,28 @@ class game ~(frame : #GContainer.container) ~(label : #GMisc.label)
       try (self#update_build (); state <- match current_building with
           | Empty -> turn#pop ();
             turn#push "Current Date: Dec 2017";
-            self#update_turn (); State.do' (Delete (x,y)) state
+            State.do' (Delete (x,y)) state
           | Dorm -> turn#pop ();
             turn#push "Current Date: May 2020";
-            self#update_turn (); State.do' (Build (x,y,Dorm)) state
+            State.do' (Build (x,y,Dorm)) state
           | Dining -> turn#pop ();
             turn#push "Current Date: May 1860";
-            self#update_turn (); State.do' (Build (x,y,Dining)) state
+            State.do' (Build (x,y,Dining)) state
           | Lecture -> turn#pop ();
             turn#push "Current Date: May 1870";
-            self#update_turn (); State.do' (Build (x,y,Lecture)) state
+            State.do' (Build (x,y,Lecture)) state
           | Power -> turn#pop ();
             turn#push "Current Date: May 1880";
-            self#update_turn (); State.do' (Build (x,y,Power)) state
+            State.do' (Build (x,y,Power)) state
           | Park -> turn#pop ();
             turn#push "Current Date: May 1890";
-            self#update_turn (); State.do' (Build (x,y,Park)) state
+            State.do' (Build (x,y,Park)) state
           | Road -> turn#pop ();
             turn#push "Current Date: May 1900";
-            self#update_turn (); State.do' (Build (x,y,Road)) state
+            State.do' (Build (x,y,Road)) state
           | Pline -> turn#pop ();
             turn#push "Current Date: May 1910";
-            self#update_turn (); State.do' (Build (x,y,Pline)) state
+            State.do' (Build (x,y,Pline)) state
           | _ -> state); true
       with
       | _ -> false
@@ -522,37 +509,37 @@ let setup_ui window =
   let tuition_window = GWindow.window ~title:"Set Tuition" ~border_width:0 () in
   tuition_window#connect#destroy ~callback:tuition_window#destroy;
 
-  let box1 = GPack.vbox ~packing:tuition_window#add () in
-  let box2 = GPack.vbox ~spacing:10 ~border_width:50 ~packing:box1#add () in
+  let tbox1 = GPack.vbox ~packing:tuition_window#add () in
+  let tbox2 = GPack.vbox ~spacing:10 ~border_width:50 ~packing:tbox1#add () in
 
   let button_zero = GButton.radio_button ~label:"$0" ~active:false
-      ~packing:box2#add () in
+      ~packing:tbox2#add () in
   let button_ten = GButton.radio_button ~group:button_zero#group
-      ~label:"$10000" ~active:true ~packing:box2#add () in
+      ~label:"$10000" ~active:true ~packing:tbox2#add () in
   let button_twenty = GButton.radio_button ~group:button_zero#group
-      ~label:"$20000" ~active:false ~packing:box2#add () in
+      ~label:"$20000" ~active:false ~packing:tbox2#add () in
   let button_thirty = GButton.radio_button ~group:button_zero#group
-      ~label:"$30000" ~active:false ~packing:box2#add () in
+      ~label:"$30000" ~active:false ~packing:tbox2#add () in
   let button_forty = GButton.radio_button ~group:button_zero#group
-      ~label:"$40000" ~active:false ~packing:box2#add () in
+      ~label:"$40000" ~active:false ~packing:tbox2#add () in
   let button_fifty = GButton.radio_button ~group:button_zero#group
-      ~label:"$50000" ~active:false ~packing:box2#add () in
+      ~label:"$50000" ~active:false ~packing:tbox2#add () in
   let button_sixty = GButton.radio_button ~group:button_zero#group
-      ~label:"$60000" ~active:false ~packing:box2#add () in
+      ~label:"$60000" ~active:false ~packing:tbox2#add () in
   let button_seventy = GButton.radio_button ~group:button_zero#group
-      ~label:"$70000" ~active:false ~packing:box2#add () in
+      ~label:"$70000" ~active:false ~packing:tbox2#add () in
   let button_eighty = GButton.radio_button ~group:button_zero#group
-      ~label:"$80000" ~active:false ~packing:box2#add () in
+      ~label:"$80000" ~active:false ~packing:tbox2#add () in
   let button_ninty = GButton.radio_button ~group:button_zero#group
-      ~label:"$90000" ~active:false ~packing:box2#add () in
+      ~label:"$90000" ~active:false ~packing:tbox2#add () in
   let button_hundred = GButton.radio_button ~group:button_zero#group
-      ~label:"$100000" ~active:false ~packing:box2#add () in
+      ~label:"$100000" ~active:false ~packing:tbox2#add () in
 
-  let separator = GMisc.separator `HORIZONTAL ~packing: box1#pack () in
+  let separator = GMisc.separator `HORIZONTAL ~packing: tbox1#pack () in
 
-  let box3 = GPack.vbox ~spacing:10 ~border_width:10 ~packing:box1#pack () in
+  let tbox3 = GPack.vbox ~spacing:10 ~border_width:10 ~packing:tbox1#pack () in
 
-  let submit_button = GButton.button ~label:"Submit" ~packing:box3#add () in
+  let submit_button = GButton.button ~label:"Submit" ~packing:tbox3#add () in
   submit_button#connect#clicked
     ~callback:tuition_window#destroy; submit_button#grab_default ();
 
