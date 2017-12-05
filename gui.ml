@@ -387,6 +387,9 @@ let setup_ui window =
 
   let h_box2 = GPack.hbox ~packing:box1#pack  ~height:50 () in
 
+  let button_text str b =
+    str ^ ": $" ^ string_of_int (State.get_bcost b) in
+
   (* create button and put it in h_box1
    * - [~relief: `NONE] removes shadows around edge of button  *)
   let dorm_button = GButton.button ~packing:h_box1#add () in
@@ -398,7 +401,8 @@ let setup_ui window =
       pline_pressed := false; bulldoze_pressed := false;
       print_endline "Dorm button was pressed") ;
   (* create box with xpm image and put into button *)
-  xpm_label_box ~file:"dorm.xpm" ~text:"Dorm" ~packing:dorm_button#add ();
+  xpm_label_box ~file:"dorm.xpm" ~text:(button_text "Dorm" Dorm)
+    ~packing:dorm_button#add ();
 
   let dining_button = GButton.button ~packing:h_box1#add () in
   dining_button#connect#clicked ~callback:
@@ -407,7 +411,8 @@ let setup_ui window =
       park_pressed := false; road_pressed := false;
       pline_pressed := false; bulldoze_pressed := false;
       print_endline "Dining button was pressed");
-  xpm_label_box ~file:"dining.xpm" ~text:"Dining Hall" ~packing:dining_button#add ();
+  xpm_label_box ~file:"dining.xpm" ~text:(button_text "Dining Hall" Dining)
+    ~packing:dining_button#add ();
 
   let lecture_button = GButton.button ~packing:h_box1#add () in
   lecture_button#connect#clicked ~callback:
@@ -416,7 +421,8 @@ let setup_ui window =
       park_pressed := false; road_pressed := false;
       pline_pressed := false; bulldoze_pressed := false;
       print_endline "Lecture button was pressed");
-  xpm_label_box ~file:"lecture.xpm" ~text:"Lecture Hall" ~packing:lecture_button#add ();
+  xpm_label_box ~file:"lecture.xpm" ~text:(button_text "Lecture Hall" Lecture)
+    ~packing:lecture_button#add ();
 
   let power_button = GButton.button ~packing:h_box1#add () in
   power_button#connect#clicked ~callback:
@@ -425,7 +431,8 @@ let setup_ui window =
       park_pressed := false; road_pressed := false;
       pline_pressed := false; bulldoze_pressed := false;
       print_endline "Power button was pressed");
-  xpm_label_box ~file:"power.xpm" ~text:"Power Source" ~packing:power_button#add ();
+  xpm_label_box ~file:"power.xpm" ~text:(button_text "Power Source" Power)
+    ~packing:power_button#add ();
 
   let park_button = GButton.button ~packing:h_box2#add () in
   park_button#connect#clicked ~callback:
@@ -434,7 +441,8 @@ let setup_ui window =
       park_pressed := true; road_pressed := false;
       pline_pressed := false; bulldoze_pressed := false;
       print_endline "Park button was pressed");
-  xpm_label_box ~file:"park.xpm" ~text:"Park" ~packing:park_button#add ();
+  xpm_label_box ~file:"park.xpm" ~text:(button_text "Park" Park)
+    ~packing:park_button#add ();
 
   let road_button = GButton.button ~packing:h_box2#add () in
   road_button#connect#clicked ~callback:
@@ -443,7 +451,8 @@ let setup_ui window =
       park_pressed := false; road_pressed := true;
       pline_pressed := false; bulldoze_pressed := false;
       print_endline "Road button was pressed");
-  xpm_label_box ~file:"road.xpm" ~text:"Road" ~packing:road_button#add ();
+  xpm_label_box ~file:"road.xpm" ~text:(button_text "Road" Road)
+    ~packing:road_button#add ();
 
   let pline_button = GButton.button ~packing:h_box2#add () in
   pline_button#connect#clicked ~callback:
@@ -452,7 +461,8 @@ let setup_ui window =
       park_pressed := false; road_pressed := false;
       pline_pressed := true; bulldoze_pressed := false;
       print_endline "Power line button was pressed");
-  xpm_label_box ~file:"power.xpm" ~text:"Power Line" ~packing:pline_button#add ();
+  xpm_label_box ~file:"power.xpm" ~text:(button_text "Power Line" Pline)
+    ~packing:pline_button#add ();
 
   let bulldoze = GButton.button ~packing:h_box2#add () in
   bulldoze#connect#clicked ~callback:
@@ -477,12 +487,58 @@ let setup_ui window =
   (* status bar, displaying turn and messages *)
   let bar = GMisc.statusbar ~packing:hbox#add () in
   let frame2 = GBin.frame ~shadow_type:`IN ~packing:hbox#pack () in
+
   (* label displaying population and money *)
   let label = GMisc.label ~justify:`LEFT ~xpad:5 ~xalign:0.0 ~packing:frame2#add () in
+
+  (* [tuition_window] is a window that pops up once the user_tuition button
+   * ("Change Tuition") is clicked. *)
+  let tuition_window = GWindow.window ~title:"Set Tuition" ~border_width:0 () in
+  tuition_window#connect#destroy ~callback:tuition_window#destroy;
+
+  let box1 = GPack.vbox ~packing:tuition_window#add () in
+  let box2 = GPack.vbox ~spacing:10 ~border_width:50 ~packing:box1#add () in
+
+  let button_zero = GButton.radio_button ~label:"$0" ~active:false
+      ~packing:box2#add () in
+  let button_ten = GButton.radio_button ~group:button_zero#group
+      ~label:"$10000" ~active:true ~packing:box2#add () in
+  let button_twenty = GButton.radio_button ~group:button_zero#group
+      ~label:"$20000" ~active:false ~packing:box2#add () in
+  let button_thirty = GButton.radio_button ~group:button_zero#group
+      ~label:"$30000" ~active:false ~packing:box2#add () in
+  let button_forty = GButton.radio_button ~group:button_zero#group
+      ~label:"$40000" ~active:false ~packing:box2#add () in
+  let button_fifty = GButton.radio_button ~group:button_zero#group
+      ~label:"$50000" ~active:false ~packing:box2#add () in
+  let button_sixty = GButton.radio_button ~group:button_zero#group
+      ~label:"$60000" ~active:false ~packing:box2#add () in
+  let button_seventy = GButton.radio_button ~group:button_zero#group
+      ~label:"$70000" ~active:false ~packing:box2#add () in
+  let button_eighty = GButton.radio_button ~group:button_zero#group
+      ~label:"$80000" ~active:false ~packing:box2#add () in
+  let button_ninty = GButton.radio_button ~group:button_zero#group
+      ~label:"$90000" ~active:false ~packing:box2#add () in
+  let button_hundred = GButton.radio_button ~group:button_zero#group
+      ~label:"$100000" ~active:false ~packing:box2#add () in
+
+  let separator = GMisc.separator `HORIZONTAL ~packing: box1#pack () in
+
+  let box3 = GPack.vbox ~spacing:10 ~border_width:10 ~packing:box1#pack () in
+
+  let submit_button = GButton.button ~label:"Submit" ~packing:box3#add () in
+  submit_button#connect#clicked
+    ~callback:tuition_window#destroy; submit_button#grab_default ();
+
+  let user_tuition = GButton.button ~label:"Change Tuition" ~packing:hbox#add () in
+  user_tuition#connect#clicked
+    ~callback: (fun () -> tuition_window#show ();
+                 print_endline "User tuition button was pressed");
 
   let filebutton = GButton.button () in
   filebutton#connect#clicked ~callback:
     (fun () -> (*GToolbox.select_file ~title:"Select"*) ());
+
 
   let buttonslist = ["About";"Map from file";"Map from size"] in
   let sizelist = ["20x20";"30x30";"40x40"] in
