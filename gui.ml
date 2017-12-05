@@ -319,11 +319,7 @@ let activ_action ac =
   Printf.printf "Action '%s' activated\n" ac#name ;
   flush stdout;
   match ac#name with
-<<<<<<< HEAD
   | "New" -> GToolbox.message_box ~title:"New Game" new_message
-=======
-  | "Quit" -> window#destroy ()
->>>>>>> a1d04527bd7a4c6a3bb843255c5ce3ba6ccf43d1
   | "About" -> GToolbox.message_box ~title:"About" about_message
   | "Quit" -> window#destroy ()
   | _ -> ()
