@@ -493,7 +493,7 @@ and check_3x3 x y st : bool =
     let g7 = st.grid.(x+1).(y-1) in
     let g8 = st.grid.(x+1).(y) in
     let g9 = st.grid.(x+1).(y+1) in
-    if g1.btype<>Empty && g1.terrain==Water then false
+    if g1.btype<>Empty || g1.terrain==Water then false
     else if g2.btype<>Empty || g2.terrain==Water then false
     else if g3.btype<>Empty || g3.terrain==Water then false
     else if g4.btype<>Empty || g4.terrain==Water then false
