@@ -20,6 +20,8 @@ let road_pressed = ref false
 let pline_pressed = ref false
 let bulldoze_pressed = ref false
 
+let tuition = ref (State.get_tuition !initstate)
+
 let welcome_mess = "Welcome to NOT SIM CITY, an open-ended University Simulator
 based on real-life experience at Cornell University!"
 let about_message = "Not Sim City: CS 3110 Final Project
@@ -104,7 +106,7 @@ let pixpark =
 let pixroad =
   GDraw.pixmap_from_xpm ~file: "road.xpm" ()
 let pixpline =
-  GDraw.pixmap_from_xpm ~file: "power.xpm" ()
+  GDraw.pixmap_from_xpm ~file: "pline.xpm" ()
 
 (* Create a new hbox with an image packed into it
  * and pack the box *)
@@ -121,11 +123,7 @@ let xpm_label_box ~file ~text ~packing () =
 
 (* cell: a button with a pixmap on it *)
 class cell ~build ~terrain ?packing ?show () =
-  (* Sets up tooltips for cell *)
-  let tooltips = GData.tooltips () in
   let button = GButton.button ?packing ?show ~relief:`NONE () in
-  let _ = tooltips#set_tip button#coerce
-      ~text:("Delete cost: $" ^ string_of_int (State.get_dcost build)) in
 
   let bldimg = match build with
     | Empty -> begin match terrain with
@@ -164,8 +162,7 @@ class cell ~build ~terrain ?packing ?show () =
                | Clear -> pixclear
                | Forest -> pixforest
                | Water -> pixwater end
-           | _ -> pixdining); tooltips#set_tip button#coerce
-          ~text:("Delete cost: $" ^ string_of_int (State.get_dcost building))
+           | _ -> pixdining)
       end
   end
 
@@ -182,7 +179,8 @@ module GameGrid = Grid (
 (* Conducting a game *)
 open GameGrid
 
-class game ~(frame : #GContainer.container) ~(label : #GMisc.label)
+class game ~(frame : #GContainer.container) ~(poplabel : #GMisc.label)
+    ~(fundslabel : #GMisc.label) ~(happlabel : #GMisc.label)
     ~(statusbar : #GMisc.statusbar) =
 
   let size = Array.length (!initstate.grid) in
@@ -198,8 +196,10 @@ class game ~(frame : #GContainer.container) ~(label : #GMisc.label)
                    let b = (Array.get (Array.get !initstate.grid i) j).btype in
                    new cell ~build:b ~terrain:t ~packing:(table#attach ~top:i ~left:j) ()))
 
-    (* for the text displayed in bottom right *)
-    val label = label
+    (* for the info displayed in bottom bar *)
+    val poplabel = poplabel
+    val happlabel = happlabel
+    val fundslabel = fundslabel
 
     (* message that is usually displayed in statusbar *)
     val turn = statusbar#new_context ~name:"turn"
@@ -217,9 +217,17 @@ class game ~(frame : #GContainer.container) ~(label : #GMisc.label)
       | Some m -> GToolbox.message_box ~title:"Message" m
       | None -> ()
 
-    method update_label () =
-      let p, f = (State.get_num state.grid State.get_rpop), state.money in
-      label#set_text (Printf.sprintf "Population: %d \nFunds: $%d " p f)
+    method update_happlabel () =
+      let newhapp = string_of_int (State.get_happiness state) in
+      happlabel#set_text (Printf.sprintf "Happiness: "^newhapp)
+
+    method update_poplabel () =
+      let p = (State.get_num state.grid State.get_rpop) in
+      poplabel#set_text (Printf.sprintf "Population: %d students" p)
+
+    method update_fundslabel () =
+      let f = State.get_money state in
+      fundslabel#set_text (Printf.sprintf "Funds: $%d" f)
 
     method update_build () =
       current_building <- if !dorm_pressed then Dorm
@@ -276,7 +284,8 @@ class game ~(frame : #GContainer.container) ~(label : #GMisc.label)
 
     method play x y =
       if self#updatestate x y then
-        (self#update_label (); self#make_message;
+        (self#update_poplabel (); self#update_happlabel ();
+         self#update_fundslabel (); self#make_message;
          turn#pop(); turn#push ("Current Date: "^(State.get_time_passed state));
          for i = max (x-2) 0 to min (x+2) (size-1) do
            for j = max (y-2) 0 to min (y+2) (size-1) do
@@ -293,10 +302,13 @@ class game ~(frame : #GContainer.container) ~(label : #GMisc.label)
       for i = 0 to size-1 do
         for j = 0 to size-1 do
           let cell = cells.(i).(j) in
+          cell#connect#enter ~callback:cell#misc#grab_focus; (* when hovering *)
           cell#connect#clicked ~callback:(fun () -> self#play i j) (* when clicked, execute [play i j]*)
         done done;
 
-      self#update_label ();
+        self#update_poplabel ();
+        self#update_happlabel ();
+        self#update_fundslabel ();
         turn#push "Current Date: Apr 1865";
         ()
   end
@@ -404,7 +416,6 @@ let setup_ui window =
 
   let h_box2 = GPack.hbox ~packing:box1#pack  ~height:50 () in
 
-  (* [button_text] generates the text of the buttons on the top menu bar. *)
   let button_text str b =
     str ^ ": $" ^ string_of_int (State.get_bcost b) in
 
@@ -504,54 +515,53 @@ let setup_ui window =
 
   (* status bar, displaying turn and messages *)
   let bar = GMisc.statusbar ~packing:hbox#add () in
-  let frame2 = GBin.frame ~shadow_type:`IN ~packing:hbox#pack () in
+  let framepop = GBin.frame ~shadow_type:`IN ~packing:hbox#add () in
+  let framefunds = GBin.frame ~shadow_type:`IN ~packing:hbox#pack () in
+  let framehapp = GBin.frame ~shadow_type:`IN ~packing:hbox#add () in
 
   (* label displaying population and money *)
-  let label = GMisc.label ~justify:`LEFT ~xpad:5 ~xalign:0.0 ~packing:frame2#add () in
+  let pop = GMisc.label ~justify:`LEFT ~xpad:5 ~xalign:0.0 ~packing:framepop#add () in
+  let funds = GMisc.label ~justify:`LEFT ~xpad:5 ~xalign:0.0 ~packing:framefunds#add () in
+  let happ = GMisc.label ~justify:`LEFT ~xpad:5 ~xalign:0.0 ~packing:framehapp#add () in
 
-  let delete_event ev =
-    print_endline "deleted"; true in
-
-
-  let add_tuition () =
-    (* [tuition_window] is a window that pops up once the user_tuition button
-     * ("Change Tuition") is clicked. *)
-    (let tuition_window = GWindow.window ~title:"Set Tuition" ~border_width:0 () in
-    tuition_window#event#connect#delete ~callback:delete_event;
-    tuition_window#connect#destroy ~callback:tuition_window#destroy;
+  (* [tuition_window] is a window that pops up once the user_tuition button
+   * ("Change Tuition") is clicked. *)
+  let add_tuition () = (
+    let tuition_window = GWindow.window ~title:"Set Tuition" ~border_width:0 () in
+      tuition_window#connect#destroy ~callback:tuition_window#destroy;
 
     let tbox1 = GPack.vbox ~packing:tuition_window#add () in
     let tbox2 = GPack.vbox ~spacing:10 ~border_width:50 ~packing:tbox1#add () in
 
-    let button_zero = GButton.radio_button ~label:"$0" ~active:false
+    let button_zero = GButton.radio_button ~label:"$0" ~active:(!tuition=0)
         ~packing:tbox2#add () in
     let button_ten = GButton.radio_button ~group:button_zero#group
-        ~label:"$10000" ~active:true ~packing:tbox2#add () in
+        ~label:"$10000" ~active:(!tuition=10000) ~packing:tbox2#add () in
     let button_twenty = GButton.radio_button ~group:button_zero#group
-        ~label:"$20000" ~active:false ~packing:tbox2#add () in
+        ~label:"$20000" ~active:(!tuition=20000) ~packing:tbox2#add () in
     let button_thirty = GButton.radio_button ~group:button_zero#group
-        ~label:"$30000" ~active:false ~packing:tbox2#add () in
+        ~label:"$30000" ~active:(!tuition=30000) ~packing:tbox2#add () in
     let button_forty = GButton.radio_button ~group:button_zero#group
-        ~label:"$40000" ~active:false ~packing:tbox2#add () in
+        ~label:"$40000" ~active:(!tuition=40000) ~packing:tbox2#add () in
     let button_fifty = GButton.radio_button ~group:button_zero#group
-        ~label:"$50000" ~active:false ~packing:tbox2#add () in
+        ~label:"$50000" ~active:(!tuition=50000) ~packing:tbox2#add () in
     let button_sixty = GButton.radio_button ~group:button_zero#group
-        ~label:"$60000" ~active:false ~packing:tbox2#add () in
+        ~label:"$60000" ~active:(!tuition=60000) ~packing:tbox2#add () in
     let button_seventy = GButton.radio_button ~group:button_zero#group
-        ~label:"$70000" ~active:false ~packing:tbox2#add () in
+        ~label:"$70000" ~active:(!tuition=70000) ~packing:tbox2#add () in
     let button_eighty = GButton.radio_button ~group:button_zero#group
-        ~label:"$80000" ~active:false ~packing:tbox2#add () in
+        ~label:"$80000" ~active:(!tuition=80000) ~packing:tbox2#add () in
     let button_ninety = GButton.radio_button ~group:button_zero#group
-        ~label:"$90000" ~active:false ~packing:tbox2#add () in
+        ~label:"$90000" ~active:(!tuition=90000) ~packing:tbox2#add () in
     let button_hundred = GButton.radio_button ~group:button_zero#group
-        ~label:"$100000" ~active:false ~packing:tbox2#add () in
+        ~label:"$100000" ~active:(!tuition=100000) ~packing:tbox2#add () in
 
     let separator = GMisc.separator `HORIZONTAL ~packing: tbox1#pack () in
 
     let tbox3 = GPack.vbox ~spacing:10 ~border_width:10 ~packing:tbox1#pack () in
 
-    (* let set_tuition () =
-      let new_tuition = (if button_zero#active then 0
+    let set_tuition () =
+      tuition := (if button_zero#active then 0
         else if button_ten#active then 10000
         else if button_twenty#active then 20000
         else if button_thirty#active then 30000
@@ -562,25 +572,18 @@ let setup_ui window =
         else if button_eighty#active then 80000
         else if button_ninety#active then 90000
         else if button_hundred#active then 100000
-        else State.get_tuition )
-      in print_endline (string_of_int new_tuition); State.do' SetTuition new_tuition
-    in *)
+        else !tuition)
+    in
 
     let submit_button = GButton.button ~label:"Submit" ~packing:tbox3#add () in
     submit_button#connect#clicked
-      ~callback: (fun () ->
-                   tuition_window#destroy ());
+      ~callback:(fun () -> set_tuition (); tuition_window#destroy ());
 
     tuition_window#show ()) in
 
   let user_tuition = GButton.button ~label:"Change Tuition" ~packing:hbox#add () in
   user_tuition#connect#clicked
-    ~callback: (fun () -> add_tuition ();
-                 print_endline "User tuition button was pressed");
-
-  let filebutton = GButton.button () in
-  filebutton#connect#clicked ~callback:
-    (fun () -> (*GToolbox.select_file ~title:"Select"*) ());
+    ~callback: (fun () -> add_tuition ());
 
   let buttonslist = ["Instructions";"Map from file";"Map from size"] in
   let sizelist = ["20x20";"30x30";"40x40"] in
@@ -613,12 +616,7 @@ let setup_ui window =
                             "Cannot access 40x40 map - using default map"; !initstate))
   in nextbutton beginbox;
 
-  new game ~frame ~label ~statusbar:bar ;
-
-  (* 'close' button, not really necessary *)
-  let b = GButton.button ~stock:`CLOSE ~packing:hbox#pack () in
-  (* destroys window when close button is clicked *)
-  b#connect#clicked window#destroy
+  new game ~frame ~poplabel:pop ~fundslabel:funds ~happlabel:happ ~statusbar:bar
 
 
 
