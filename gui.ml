@@ -1,3 +1,8 @@
+(* We found the tutorial at the following website helpful for our
+ * implementation of the GUI in LablGTK2.
+ * http://web.archive.org/web/20160808035304/http://plus.kaist.ac.kr:80/~shoh/
+ * ocaml/lablgtk2/lablgtk2-tutorial/*)
+
 open StdLabels
 open GMain
 open Gtk
