@@ -49,7 +49,7 @@ let blizzard_happiness = 15
 let prelim_happiness = 10
 
 let init_money = 100000
-let init_tuition = 20
+let init_tuition = 20000
 
 type building_type =
   | Dorm
@@ -124,7 +124,7 @@ let get_dcost (b:building_type) = match b with
  * SetTuition are commands issued by the user to build or destroy a building at
  * specific coordinates, or to change the university's tuition rate. TimeStep
  * is a command issued automatically at regular time intervals that allows time
- * to pass in     the game state. *)
+ * to pass in the game state. *)
 type command =
   | Build of int*int*building_type
   | Delete of int*int
@@ -514,6 +514,7 @@ and check_1x1 x y b st : bool =
     | Road | Pline | Empty-> true
     | Section _ -> st.grid.(x).(y).terrain<>Water
     | _ -> false (*should never happen*)
+
 (* returns: Updated square "reset" to an empty square with no buildings on it.
  * requires: [sq] is a valid square. *)
 let delete_square sq = {sq with
