@@ -235,7 +235,14 @@ class game ~(frame : #GContainer.container) ~(poplabel : #GMisc.label)
 
     method make_message =
       match state.message with
-      | Some m -> GToolbox.message_box ~title:"Message" m
+      | Some m -> begin
+          let gen_message =
+            match m with
+            | "You Lost." -> "Quit"
+            | _ -> m in
+          GToolbox.message_box ~title:"Message" gen_message;
+          if gen_message = "Quit" then Main.quit ();
+        end
       | None -> ()
 
     method update_happlabel () =
@@ -304,7 +311,10 @@ class game ~(frame : #GContainer.container) ~(poplabel : #GMisc.label)
       | Section (x,y) -> "section"
 
     method play x y =
-      if self#updatestate x y then
+      if state.lose then
+        let f = GToolbox.message_box ~title:"YOU LOSE" "You Lose." in
+        (f; Main.quit ())
+      else if self#updatestate x y then
         (self#update_poplabel (); self#update_happlabel ();
          self#update_fundslabel (); self#make_message;
          turn#pop(); turn#push ("Current Date: "^(State.get_time_passed state));
