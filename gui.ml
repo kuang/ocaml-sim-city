@@ -6,6 +6,7 @@ open Gtk
 open GToolbox
 open GBin
 open State
+open Json
 
 let initstate = ref (match State.init_from_file "map.txt" with
     | Some m -> m
@@ -281,7 +282,7 @@ class game ~(frame : #GContainer.container) ~(poplabel : #GMisc.label)
       if not !paused then (
         state <- do' TimeStep state;
         turn#pop ();
-        turn#push ("Current Date: " ^ get_time_passed state);
+        turn#push (get_time_passed state);
         let m = match state.message with
           | None -> "University is up and running"
           | Some mess -> mess
@@ -342,7 +343,6 @@ class game ~(frame : #GContainer.container) ~(poplabel : #GMisc.label)
            next_lose_action lose_popup
          else
            self#make_message;
-         turn#pop(); turn#push ("Current Date: "^(State.get_time_passed state));
          for i = max (x-2) 0 to min (x+2) (size-1) do
            for j = max (y-2) 0 to min (y+2) (size-1) do
              let t = (Array.get (Array.get state.grid i) j).terrain in
@@ -366,7 +366,7 @@ class game ~(frame : #GContainer.container) ~(poplabel : #GMisc.label)
       self#update_poplabel ();
       self#update_happlabel ();
       self#update_fundslabel ();
-      turn#push "Current Date: Apr 1865";
+      turn#push (get_time_passed state);
       Async.(Thread.create Scheduler.go ());
       ()
   end
@@ -403,12 +403,16 @@ let ui_info = "<ui>\
 
 (* [activ_action ac] is the result of clicking [ac]. *)
 let activ_action ac =
-  Printf.printf "Action '%s' activated\n" ac#name ;
+  (* Printf.printf "Action '%s' activated\n" ac#name ; *)
   flush stdout;
   match ac#name with
   | "New" -> GToolbox.message_box ~title:"New Game" new_message
   | "About" -> GToolbox.message_box ~title:"About" about_message
   | "Pause" -> paused := not !paused
+  | "Save" -> let save = GToolbox.select_file ~title:"Save" () in
+    ( match save with
+    | Some n -> if Json.save_state n !initstate then () else GToolbox.message_box ~title:"Save" "Failed to save"
+    | None -> GToolbox.message_box ~title:"Save" "Failed to save" )
   | "Quit" -> window#destroy ()
   | _ -> ()
 
