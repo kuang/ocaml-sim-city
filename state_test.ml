@@ -187,6 +187,19 @@ let timeStep_tests = [
 ]
   *)
 
+let st13 = do' (Delete (11,14)) st11
+let dorm1_new4 = st13.grid.(11).(12)
+let ex_pline_sq = st13.grid.(11).(14)
+
+let delete_tests = [
+  "no_more_pline" >:: (fun _ -> assert_equal Empty (ex_pline_sq.btype));
+
+  (*check that power access is removed*)
+  "d_new3_daccess" >:: (fun _ -> assert_equal true (dorm1_new4.dining_access));
+  "d_new3_laccess" >:: (fun _ -> assert_equal true (dorm1_new4.lec_access));
+  "d_new3_paccess" >:: (fun _ -> assert_equal false (dorm1_new4.power_access));
+
+]
 
 
 let tests =
@@ -197,6 +210,7 @@ let tests =
     lecture_tests;
     rroad_tests;
     dining_tests;
-    power_tests
+    power_tests;
+    delete_tests
   ]
 let _ = run_test_tt_main tests
