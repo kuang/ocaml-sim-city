@@ -262,7 +262,10 @@ class game ~(frame : #GContainer.container) ~(poplabel : #GMisc.label)
     method time_step =
       state <- do' TimeStep state;
       turn#pop ();
-      turn#push ("Current Date: " ^ get_time_passed state)
+      turn#push ("Current Date: " ^ get_time_passed state);
+      self#update_happlabel ();
+      self#update_poplabel ();
+      self#update_fundslabel ();
 
     method start_time : unit Async_kernel.Deferred.t = Async.(
       after (Core.sec 5.) >>= fun _ ->
