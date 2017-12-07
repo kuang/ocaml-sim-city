@@ -1,3 +1,5 @@
+
+
 open StdLabels
 open GMain
 open Gtk
@@ -25,6 +27,8 @@ let bulldoze_pressed = ref false
 
 (* [paused] is used for TimeStep. *)
 let paused = ref false
+let file_name = ref ""
+let refresh = ref false
 
 (* [tuition] handles tuition updates set by the user. *)
 let tuition = ref ((!initstate).tuition)
@@ -43,10 +47,10 @@ connected to all resources.
 connections to lecture and dining halls.
 
 IMPORTANT NUMBERS:
-- Funds: the money you have left. If this drops below 0 after the 10th
-month, you lose.
+- Funds: the money you have left. If this drops below 0 after the first year,
+ you lose.
 - Population: the number of students attending your university. If this drops
-to 0 after the 10th month, you lose.
+to 0 after the first year, you lose.
 - Happiness: a measurement of how content your students are. This affects
 the rate at which students enroll in, or drop out of, your university.
 
@@ -63,9 +67,6 @@ FUNDS:
 - Each building requires upkeep at the beginning of each month.
 - Building and destroying buildings costs money."
 
-let new_message = "To start a new game, close the current game window and open
-a new game."
-
 module type GridSpec = sig
   type t
   val get : t -> x:int -> y:int -> State.building_type
@@ -80,8 +81,10 @@ module Grid (Spec : GridSpec) = struct
    * at (x,y), or sets (x,y) to have the pixmap associated with [building] and
    * returns [true] *)
   let action board ~x ~y ~terrain ~building =
-    if get board ~x ~y <> Empty  && !bulldoze_pressed = false then false
-    else begin
+  if (!refresh) then begin
+    set board ~x ~y ~terrain ~building ; true end
+  else if get board ~x ~y <> Empty  && !bulldoze_pressed = false then false
+  else begin
       set board ~x ~y ~terrain ~building ; true
     end
 end
@@ -215,14 +218,14 @@ class game ~(frame : #GContainer.container) ~(poplabel : #GMisc.label)
     ~(fundslabel : #GMisc.label) ~(happlabel : #GMisc.label)
     ~(statusbar : #GMisc.statusbar) ~(losebar : #GMisc.statusbar) =
 
-  let size = Array.length (!initstate.grid) in
+  let size = ref (Array.length (!initstate.grid)) in
 
-  let table = GPack.table ~columns:size ~rows:size ~packing:(frame#add_with_viewport) () in
+  let table = GPack.table ~columns:!size ~rows:!size ~packing:(frame#add_with_viewport) () in
 
   object (self)
     val mutable cells =
-      Array.init size
-        ~f:(fun i -> Array.init size
+      Array.init !size
+        ~f:(fun i -> Array.init !size
                ~f:(fun j ->
                    let t = (Array.get (Array.get !initstate.grid i) j).terrain in
                    let b = (Array.get (Array.get !initstate.grid i) j).btype in
@@ -246,31 +249,52 @@ class game ~(frame : #GContainer.container) ~(poplabel : #GMisc.label)
     method grid = cells
     method table = table
     val mutable current_building = Dorm
-    val mutable state = !initstate
+
+    (* [refresh_cells] regenerates the grid. *)
+    method refresh_cells () =
+      size := (Array.length !initstate.grid);
+      cells <- Array.init !size
+          ~f:(fun i -> Array.init !size
+                 ~f:(fun j ->
+                     let t = (Array.get (Array.get !initstate.grid i) j).terrain in
+                     let b = (Array.get (Array.get !initstate.grid i) j).btype in
+                     new cell ~build:b ~terrain:t ~packing:(table#attach ~top:i ~left:j) ()));
+      for i = 0 to !size-1 do
+        for j = 0 to !size-1 do
+          let cell = cells.(i).(j) in
+          cell#connect#enter ~callback:cell#misc#grab_focus; (* when hovering *)
+          cell#connect#clicked ~callback:(fun () -> self#play i j);
+          let t = (Array.get (Array.get !initstate.grid i) j).terrain in
+          let b = (Array.get (Array.get !initstate.grid i) j).btype in
+          let bld = match b with
+            | Section (x,y) -> (Array.get (Array.get !initstate.grid x) y).btype
+            | _ -> b in
+          action cells i j t bld
+        done done
 
     (* [make_message] generates a message from the current state if a message
      * exists. *)
     method make_message =
-      match state.message with
+      match !initstate.message with
       | Some m -> GToolbox.message_box ~title:"Message" m
       | None -> ()
 
     (* [update_happlabel] updates the text for the happiness label on the
      * bottom toolbar. *)
     method update_happlabel () =
-      let newhapp = string_of_int (state.happiness) in
+      let newhapp = string_of_int (!initstate.happiness) in
       happlabel#set_text (Printf.sprintf "Happiness: "^newhapp)
 
     (* [update_poplabel] updates the text for the population label on the
      * bottom toolbar. *)
     method update_poplabel () =
-      let p = (State.get_num state.grid State.get_rpop) in
+      let p = (State.get_num !initstate.grid State.get_rpop) in
       poplabel#set_text (Printf.sprintf "Population: %d students" p)
 
     (* [update_fundslabel] updates the text for the funds label on the
      * bottom toolbar. *)
     method update_fundslabel () =
-      let f = state.money in
+      let f = !initstate.money in
       fundslabel#set_text (Printf.sprintf "Funds: $%d" f)
 
     (* [update_build] updates the [current_building] based on which button on
@@ -288,16 +312,17 @@ class game ~(frame : #GContainer.container) ~(poplabel : #GMisc.label)
 
     (* [time_step] updates [state] by taking a TimeStep. *)
     method time_step =
+      if !refresh then (self#refresh_cells (); refresh := false) else
       if not !paused then (
-        state <- do' TimeStep state;
+        initstate := do' TimeStep !initstate;
         turn#pop ();
-        turn#push (get_time_passed state);
-        let m = match state.message with
+        turn#push (get_time_passed !initstate);
+        let m = match !initstate.message with
           | None -> "University is up and running"
           | Some mess -> mess
         in
-        if state.lose then losestatus#pop (); losestatus#push m;
-        if state.disaster <> None then
+        if !initstate.lose then losestatus#pop (); losestatus#push m;
+        if !initstate.disaster <> None then
            dis_messages#flash m;
         self#update_happlabel ();
         self#update_poplabel ();
@@ -306,21 +331,21 @@ class game ~(frame : #GContainer.container) ~(poplabel : #GMisc.label)
     method start_time : unit Async_kernel.Deferred.t = Async.(
       after (Core.sec 5.) >>= fun _ ->
       self#time_step;
-      if state.lose
+      if !initstate.lose
       then return ()
       else self#start_time )
 
     method updatestate x y : bool =
-      try (self#update_build (); state <- match current_building with
-          | Empty -> State.do' (Delete (x,y)) state
-          | Dorm -> State.do' (Build (x,y,Dorm)) state
-          | Dining -> State.do' (Build (x,y,Dining)) state
-          | Lecture -> State.do' (Build (x,y,Lecture)) state
-          | Power -> State.do' (Build (x,y,Power)) state
-          | Park -> State.do' (Build (x,y,Park)) state
-          | Road -> State.do' (Build (x,y,Road)) state
-          | Pline -> State.do' (Build (x,y,Pline)) state
-          | _ -> state); true
+      try (self#update_build (); initstate := match current_building with
+          | Empty -> State.do' (Delete (x,y)) !initstate
+          | Dorm -> State.do' (Build (x,y,Dorm)) !initstate
+          | Dining -> State.do' (Build (x,y,Dining)) !initstate
+          | Lecture -> State.do' (Build (x,y,Lecture)) !initstate
+          | Power -> State.do' (Build (x,y,Power)) !initstate
+          | Park -> State.do' (Build (x,y,Park)) !initstate
+          | Road -> State.do' (Build (x,y,Road)) !initstate
+          | Pline -> State.do' (Build (x,y,Pline)) !initstate
+          | _ -> !initstate); true
       with
       | _ -> false
 
@@ -340,7 +365,7 @@ class game ~(frame : #GContainer.container) ~(poplabel : #GMisc.label)
       if self#updatestate x y then
         (self#update_poplabel (); self#update_happlabel ();
          self#update_fundslabel ();
-         if state.lose then
+         if !initstate.lose then
            (* Generates popup button for losing *)
            let loselist = ["Ok"; "Quit"] in
            let lose_popup = GToolbox.question_box ~title:"YOU LOST"
@@ -353,19 +378,19 @@ class game ~(frame : #GContainer.container) ~(poplabel : #GMisc.label)
          else
            (* Generate message from current state *)
            self#make_message;
-         for i = max (x-2) 0 to min (x+2) (size-1) do
-           for j = max (y-2) 0 to min (y+2) (size-1) do
-             let t = (Array.get (Array.get state.grid i) j).terrain in
-             let b = (Array.get (Array.get state.grid i) j).btype in
+         for i = max (x-2) 0 to min (x+2) (!size-1) do
+           for j = max (y-2) 0 to min (y+2) (!size-1) do
+             let t = (Array.get (Array.get !initstate.grid i) j).terrain in
+             let b = (Array.get (Array.get !initstate.grid i) j).btype in
              let bld = match b with
-               | Section (x,y) -> (Array.get (Array.get state.grid x) y).btype
+               | Section (x,y) -> (Array.get (Array.get !initstate.grid x) y).btype
                | _ -> b in
              action cells i j t bld
            done done)
 
     initializer
-      for i = 0 to size-1 do
-        for j = 0 to size-1 do
+      for i = 0 to !size-1 do
+        for j = 0 to !size-1 do
           let cell = cells.(i).(j) in
           cell#connect#enter ~callback:cell#misc#grab_focus; (* when hovering *)
           cell#connect#clicked ~callback:(fun () -> self#play i j) (* when clicked, execute [play i j]*)
@@ -376,7 +401,7 @@ class game ~(frame : #GContainer.container) ~(poplabel : #GMisc.label)
       self#update_poplabel ();
       self#update_happlabel ();
       self#update_fundslabel ();
-      turn#push (get_time_passed state);
+      turn#push (get_time_passed !initstate);
       Async.(Thread.create Scheduler.go ());
       ()
   end
@@ -414,17 +439,34 @@ let ui_info = "<ui>\
 (* [activ_action ac] is the result of clicking [ac]. *)
 let activ_action ac =
   flush stdout;
-  match ac#name with
-  | "New" -> GToolbox.message_box ~title:"New Game" new_message
+  let ac_name = ac#name in
+  let rec exec = function
+  | "New" -> exec "Load"
   | "About" -> GToolbox.message_box ~title:"About" about_message
   | "Pause" -> paused := not !paused
-  | "Save" -> let save = GToolbox.select_file ~title:"Save" () in
-    (match save with
-     | Some n -> if Json.save_state n !initstate then () else
-         GToolbox.message_box ~title:"Save" "Failed to save"
-     | None -> GToolbox.message_box ~title:"Save" "Failed to save" )
+  | "Save" -> (if !file_name <> "" then begin
+  if Json.save_state !file_name !initstate
+    then GToolbox.message_box ~title:"Save" "Save successful!"
+    else GToolbox.message_box ~title:"Save" "Failed to save"
+  end
+     else (exec "SaveAs"))
+  | "SaveAs" -> let save = GToolbox.select_file ~title:"Save" () in
+    ( match save with
+      | Some n -> if Json.save_state n !initstate
+        then (file_name := n; GToolbox.message_box ~title:"Save" "Save successful!")
+        else GToolbox.message_box ~title:"Save" "Failed to save"
+      | None -> GToolbox.message_box ~title:"Save" "Failed to save" )
+  | "Open" -> let openf = GToolbox.select_file ~title:"Open" () in
+    ( match openf with
+      | Some n -> begin match (Json.load_state n) with
+          | Some s -> (initstate := s; refresh := true;
+                       GToolbox.message_box ~title:"Open"
+                         "Load successful! Please wait while the map refreshes.")
+        | None -> GToolbox.message_box ~title:"Open" "Failed to open" end
+      | None -> GToolbox.message_box ~title:"Open" "Failed to open" )
   | "Quit" -> window#destroy ()
   | _ -> ()
+  in exec ac_name
 
 let setup_ui window =
   let a = GAction.add_action in
