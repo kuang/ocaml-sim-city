@@ -275,24 +275,6 @@ class game ~(frame : #GContainer.container) ~(poplabel : #GMisc.label)
         else Empty
 
     method time_step =
-<<<<<<< HEAD
-      state <- do' (SetTuition !tuition) state;
-      state <- do' TimeStep state;
-      initstate := state;
-      turn#pop ();
-      turn#push ("Current Date: " ^ get_time_passed state);
-      let m = match state.message with
-        | None -> "University is up and running"
-        | Some mess -> mess
-      in
-      if state.lose then losestatus#pop (); losestatus#push m;
-      if state.disaster <> None then
-         dis_messages#flash m;
-      self#update_happlabel ();
-      self#update_poplabel ();
-      self#update_fundslabel ()
-     (* self#make_message; *)
-=======
       if not !paused then (
         state <- do' TimeStep state;
         turn#pop ();
@@ -307,7 +289,6 @@ class game ~(frame : #GContainer.container) ~(poplabel : #GMisc.label)
         self#update_happlabel ();
         self#update_poplabel ();
         self#update_fundslabel ())
->>>>>>> 7bf8990e376bab6cee64c71c91271d26889a4f6a
 
     method start_time : unit Async_kernel.Deferred.t = Async.(
       after (Core.sec 5.) >>= fun _ ->
@@ -343,15 +324,6 @@ class game ~(frame : #GContainer.container) ~(poplabel : #GMisc.label)
       | Section (x,y) -> "section"
 
     method play x y =
-<<<<<<< HEAD
-      if state.lose then
-        let f = GToolbox.message_box ~title:"YOU LOSE" "You Lose." in
-        (f; Main.quit ())
-      else if self#updatestate x y then
-        (initstate := state; self#update_poplabel (); self#update_happlabel ();
-         self#update_fundslabel (); self#make_message;
-         turn#pop(); turn#push ("Current Date: "^(State.get_time_passed state));
-=======
       if self#updatestate x y then
         (self#update_poplabel (); self#update_happlabel ();
          self#update_fundslabel ();
@@ -366,7 +338,6 @@ class game ~(frame : #GContainer.container) ~(poplabel : #GMisc.label)
            next_lose_action lose_popup
          else
            self#make_message;
->>>>>>> 7bf8990e376bab6cee64c71c91271d26889a4f6a
          for i = max (x-2) 0 to min (x+2) (size-1) do
            for j = max (y-2) 0 to min (y+2) (size-1) do
              let t = (Array.get (Array.get state.grid i) j).terrain in
@@ -434,14 +405,10 @@ let activ_action ac =
   | "New" -> GToolbox.message_box ~title:"New Game" new_message
   | "About" -> GToolbox.message_box ~title:"About" about_message
   | "Pause" -> paused := not !paused
-  | "Save" -> let save = GWindow.file_selection ~title:"About" () in
-    save#cancel_button#connect#clicked ~callback:save#destroy;
-    save#ok_button#connect#clicked ~callback: begin
-      Json.save_state "name" !initstate; save#destroy
-    end; save#show ()
-(* Json.save_state (match GToolbox.input_text ~title:"Save Game" with
-      | Some m -> m
-                 | None -> "notsimcity.txt") state *)
+  | "Save" -> let save = GToolbox.select_file ~title:"Save" () in
+    ( match save with
+    | Some n -> if Json.save_state n !initstate then () else GToolbox.message_box ~title:"Save" "Failed to save"
+    | None -> GToolbox.message_box ~title:"Save" "Failed to save" )
   | "Quit" -> window#destroy ()
   | _ -> ()
 
