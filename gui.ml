@@ -20,6 +20,8 @@ let road_pressed = ref false
 let pline_pressed = ref false
 let bulldoze_pressed = ref false
 
+let build_mode = ref true
+
 let welcome_mess = "Welcome to NOT SIM CITY, an open-ended University Simulator
 based on real-life experience at Cornell University!"
 let about_message = "Not Sim City: CS 3110 Final Project
@@ -414,7 +416,10 @@ let setup_ui window =
   let h_box2 = GPack.hbox ~packing:box1#pack  ~height:50 () in
 
   let button_text str b =
-    str ^ ": $" ^ string_of_int (State.get_bcost b) in
+    str ^ ": $" ^ string_of_int (begin
+      if !build_mode then State.get_bcost b
+      else State.get_dcost b
+    end) in
 
   (* create button and put it in h_box1
    * - [~relief: `NONE] removes shadows around edge of button  *)
@@ -496,6 +501,8 @@ let setup_ui window =
       lecture_pressed := false; power_pressed := false;
       park_pressed := false; road_pressed := false;
       pline_pressed := false; bulldoze_pressed := true;
+      if !build_mode = true then build_mode := false
+      else build_mode := true;
       print_endline "Bulldoze button was pressed");
   xpm_label_box ~file:"bulldozer.xpm" ~text:"Bulldozer" ~packing:bulldoze#add ();
 
@@ -548,7 +555,7 @@ let setup_ui window =
   let button_hundred = GButton.radio_button ~group:button_zero#group
       ~label:"$100000" ~active:false ~packing:box2#add () in
 
-  let separator = GMisc.separator `HORIZONTAL ~packing: box1#pack () in
+  let separator = GMisc.separator `HORIZONTAL ~packing:box1#pack () in
 
   let box3 = GPack.vbox ~spacing:10 ~border_width:10 ~packing:box1#pack () in
 

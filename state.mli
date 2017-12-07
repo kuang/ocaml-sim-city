@@ -73,6 +73,9 @@ type gamestate = {
 (* [get_bcost] returns the build cost associated with a building_type. *)
 val get_bcost : building_type -> int
 
+(* [get_bcost] returns the delete cost associated with a building_type. *)
+val get_dcost : building_type -> int
+
 (* [init_state] returns the initial state of the game. *)
 val init_state : int -> gamestate
 
