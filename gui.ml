@@ -487,7 +487,7 @@ let setup_ui window =
     (fun () -> dorm_pressed := false; dining_pressed := false;
       lecture_pressed := false; power_pressed := false;
       park_pressed := false; road_pressed := false;
-      pline_pressed := false; bulldoze_pressed := true;
+      pline_pressed := false; bulldoze_pressed := true; 
       print_endline "Bulldoze button was pressed");
   xpm_label_box ~file:"bulldozer.xpm" ~text:"Bulldozer" ~packing:bulldoze#add ();
 
