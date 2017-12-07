@@ -6,6 +6,7 @@ open Gtk
 open GToolbox
 open GBin
 open State
+open Json
 
 let initstate = ref (match State.init_from_file "map.txt" with
     | Some m -> m
@@ -274,7 +275,9 @@ class game ~(frame : #GContainer.container) ~(poplabel : #GMisc.label)
         else Empty
 
     method time_step =
+      state <- do' (SetTuition !tuition) state;
       state <- do' TimeStep state;
+      initstate := state;
       turn#pop ();
       turn#push ("Current Date: " ^ get_time_passed state);
       let m = match state.message with
@@ -327,7 +330,7 @@ class game ~(frame : #GContainer.container) ~(poplabel : #GMisc.label)
         let f = GToolbox.message_box ~title:"YOU LOSE" "You Lose." in
         (f; Main.quit ())
       else if self#updatestate x y then
-        (self#update_poplabel (); self#update_happlabel ();
+        (initstate := state; self#update_poplabel (); self#update_happlabel ();
          self#update_fundslabel (); self#make_message;
          turn#pop(); turn#push ("Current Date: "^(State.get_time_passed state));
          for i = max (x-2) 0 to min (x+2) (size-1) do
@@ -391,12 +394,20 @@ let ui_info = "<ui>\
 (* [activ_action ac] is the result of clicking [ac]
  * Currently, it simply prints the action *)
 let activ_action ac =
-  Printf.printf "Action '%s' activated\n" ac#name ;
+  (* Printf.printf "Action '%s' activated\n" ac#name ; *)
   flush stdout;
   match ac#name with
   | "New" -> GToolbox.message_box ~title:"New Game" new_message
   | "About" -> GToolbox.message_box ~title:"About" about_message
   | "Pause" -> paused := not !paused
+  | "Save" -> let save = GWindow.file_selection ~title:"About" () in
+    save#cancel_button#connect#clicked ~callback:save#destroy;
+    save#ok_button#connect#clicked ~callback: begin
+      Json.save_state "name" !initstate; save#destroy
+    end; save#show ()
+(* Json.save_state (match GToolbox.input_text ~title:"Save Game" with
+      | Some m -> m
+                 | None -> "notsimcity.txt") state *)
   | "Quit" -> window#destroy ()
   | _ -> ()
 
