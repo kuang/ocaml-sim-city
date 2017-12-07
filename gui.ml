@@ -123,7 +123,17 @@ let xpm_label_box ~file ~text ~packing () =
 
 (* cell: a button with a pixmap on it *)
 class cell ~build ~terrain ?packing ?show () =
+(* Sets up tooltips for cell *)
+  let tooltips = GData.tooltips () in
   let button = GButton.button ?packing ?show ~relief:`NONE () in
+  let _ = tooltips#set_tip button#coerce
+      ~text:(begin match build with
+        | Empty -> begin match terrain with
+            | Clear -> "Clear"
+            | Forest -> "Forest"
+            | Water -> "Water" end
+        | _ -> "Delete cost: $" ^
+               string_of_int (State.get_dcost build) end) in
 
   let bldimg = match build with
     | Empty -> begin match terrain with
@@ -162,7 +172,16 @@ class cell ~build ~terrain ?packing ?show () =
                | Clear -> pixclear
                | Forest -> pixforest
                | Water -> pixwater end
-           | _ -> pixdining)
+           | _ -> pixdining); tooltips#set_tip button#coerce
+          ~text:(begin
+              match building with
+                  | Empty -> begin match terr with
+                      | Clear -> "Clear"
+                      | Forest -> "Forest"
+                      | Water -> "Water" end
+                  | _ -> "Delete cost: $" ^
+                         string_of_int (State.get_dcost building)
+            end)
       end
   end
 
