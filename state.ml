@@ -245,11 +245,12 @@ let get_num grid f : int =
 
 (* [update_build happ b] is [b'], where [b'] is [b] after a month with
  * happiness level [happ]. *)
-let update_build happ (b : square) =
+let update_build st happ (b : square) =
   match b.btype with
   | Dorm -> begin
-  let newpop = if (b.dining_access && b.lec_access && b.power_access) then
-      b.population + (b.level+1)*happ else 0 (* MADE UP NUMBERS*) in {
+  let newpop = max 0 (if (b.dining_access && b.lec_access && b.power_access) then
+                        b.population + (b.level+1)*happ else 0) (* MADE UP NUMBERS*)
+  in {
     b with btype = b.btype;
     level = newpop / 500; (* MADE UP NUMBERS*)
     maintenance_cost = (newpop / 500)*dorm_mcost;  (* MADE UP NUMBERS*)
@@ -260,13 +261,13 @@ let update_build happ (b : square) =
 
 (* [update_row happ r] is [r'] containing squares which have stepped one
  * month under happiness level [happ]. *)
-let update_row happ r =
-  Array.map (update_build happ) r
+let update_row st happ r =
+  Array.map (update_build st happ) r
 
 (* [update_grid happ grid] is [grid'] containing squares which have stepped one
  * month under happiness level [happ]. *)
-let update_grid happ (grid:square array array) =
-  Array.map (update_row happ) grid
+let update_grid st happ (grid:square array array) =
+  Array.map (update_row st happ) grid
 
 let three_by_three x y =
   [ x - 1, y - 1; x, y - 1; x + 1, y - 1 ;
@@ -598,12 +599,13 @@ let do_time st =
     | Some Blizzard -> blizzard_happiness
     | Some Prelim -> prelim_happiness
     | None -> 0 in
-  let happ = max (st.happiness - dishapp) (-100) in
-  let grid = update_grid happ st.grid in
+  let tuthapp = (st.tuition - 60000)/5000 in
+  let happ = max (st.happiness - dishapp - tuthapp) (-100) in
+  let grid = update_grid st happ st.grid in
   let pop = get_num grid get_rpop in
-  let money = if (st.time_passed + 1) mod 12 <> 0
-    then st.money - (get_num st.grid get_rmain)
-    else st.money + pop*st.tuition in
+  let money = st.money - (get_num st.grid get_rmain) +
+    if (st.time_passed + 1) mod 12 = 0
+    then pop*st.tuition else 0 in
   let lose = (money < 0 || pop <= 0) && st.time_passed > 11 in
   let message = if lose then Some "You Lost."
     else match disaster with

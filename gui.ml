@@ -20,6 +20,8 @@ let road_pressed = ref false
 let pline_pressed = ref false
 let bulldoze_pressed = ref false
 
+let paused = ref false
+
 let tuition = ref ((!initstate).tuition)
 
 let welcome_mess = "Welcome to NOT SIM CITY, an open-ended University Simulator
@@ -36,9 +38,9 @@ connections to lecture and dining halls.
 
 IMPORTANT NUMBERS:
 - Funds: the money you have left. If this drops below 0 after the 10th
-turn, you lose.
+month, you lose.
 - Population: the number of students attending your university. If this drops
-to 0 after the 10th turn, you lose.
+to 0 after the 10th month, you lose.
 - Happiness: a measurement of how content your students are. This affects
 the rate at which students enroll in, or drop out of, your university.
 
@@ -233,7 +235,14 @@ class game ~(frame : #GContainer.container) ~(poplabel : #GMisc.label)
 
     method make_message =
       match state.message with
-      | Some m -> GToolbox.message_box ~title:"Message" m
+      | Some m -> begin
+          let gen_message =
+            match m with
+            | "You Lost." -> "Quit"
+            | _ -> m in
+          GToolbox.message_box ~title:"Message" gen_message;
+          if gen_message = "Quit" then Main.quit ();
+        end
       | None -> ()
 
     method update_happlabel () =
@@ -265,39 +274,26 @@ class game ~(frame : #GContainer.container) ~(poplabel : #GMisc.label)
       turn#push ("Current Date: " ^ get_time_passed state);
       self#update_happlabel ();
       self#update_poplabel ();
-      self#update_fundslabel ();
+      self#update_fundslabel ()
+     (* self#make_message; *)
 
     method start_time : unit Async_kernel.Deferred.t = Async.(
       after (Core.sec 5.) >>= fun _ ->
       self#time_step;
-      self#start_time )
+      if state.lose
+      then return ()
+      else self#start_time )
 
     method updatestate x y : bool =
       try (self#update_build (); state <- match current_building with
-          | Empty -> turn#pop ();
-            turn#push "Current Date: Dec 2017";
-            State.do' (Delete (x,y)) state
-          | Dorm -> turn#pop ();
-            turn#push "Current Date: May 2020";
-            State.do' (Build (x,y,Dorm)) state
-          | Dining -> turn#pop ();
-            turn#push "Current Date: May 1860";
-            State.do' (Build (x,y,Dining)) state
-          | Lecture -> turn#pop ();
-            turn#push "Current Date: May 1870";
-            State.do' (Build (x,y,Lecture)) state
-          | Power -> turn#pop ();
-            turn#push "Current Date: May 1880";
-            State.do' (Build (x,y,Power)) state
-          | Park -> turn#pop ();
-            turn#push "Current Date: May 1890";
-            State.do' (Build (x,y,Park)) state
-          | Road -> turn#pop ();
-            turn#push "Current Date: May 1900";
-            State.do' (Build (x,y,Road)) state
-          | Pline -> turn#pop ();
-            turn#push "Current Date: May 1910";
-            State.do' (Build (x,y,Pline)) state
+          | Empty -> State.do' (Delete (x,y)) state
+          | Dorm -> State.do' (Build (x,y,Dorm)) state
+          | Dining -> State.do' (Build (x,y,Dining)) state
+          | Lecture -> State.do' (Build (x,y,Lecture)) state
+          | Power -> State.do' (Build (x,y,Power)) state
+          | Park -> State.do' (Build (x,y,Park)) state
+          | Road -> State.do' (Build (x,y,Road)) state
+          | Pline -> State.do' (Build (x,y,Pline)) state
           | _ -> state); true
       with
       | _ -> false
@@ -315,7 +311,10 @@ class game ~(frame : #GContainer.container) ~(poplabel : #GMisc.label)
       | Section (x,y) -> "section"
 
     method play x y =
-      if self#updatestate x y then
+      if state.lose then
+        let f = GToolbox.message_box ~title:"YOU LOSE" "You Lose." in
+        (f; Main.quit ())
+      else if self#updatestate x y then
         (self#update_poplabel (); self#update_happlabel ();
          self#update_fundslabel (); self#make_message;
          turn#pop(); turn#push ("Current Date: "^(State.get_time_passed state));
@@ -385,6 +384,7 @@ let activ_action ac =
   match ac#name with
   | "New" -> GToolbox.message_box ~title:"New Game" new_message
   | "About" -> GToolbox.message_box ~title:"About" about_message
+  | "Pause" -> paused := not !paused
   | "Quit" -> window#destroy ()
   | _ -> ()
 
@@ -423,7 +423,7 @@ let setup_ui window =
 
       ta "Pause" ~label:"_Pause"
         ~accel:"<control>P"
-        ~callback:activ_action ~active:true ;
+        ~callback:activ_action ~active:false ;
 
       radio ~init_value:0 ~callback:(fun n -> Printf.printf "radio action %d\n%!" n)
         [ ra "Fire" 0 ~label:"_Fire"
@@ -517,7 +517,7 @@ let setup_ui window =
       lecture_pressed := false; power_pressed := false;
       park_pressed := false; road_pressed := false;
       pline_pressed := true; bulldoze_pressed := false);
-  xpm_label_box ~file:"power.xpm" ~text:(button_text "Power Line" Pline)
+  xpm_label_box ~file:"pline.xpm" ~text:(button_text "Power Line" Pline)
     ~packing:pline_button#add ();
 
   let bulldoze = GButton.button ~packing:h_box2#add () in
@@ -540,7 +540,7 @@ let setup_ui window =
   let hbox = GPack.hbox ~packing:vbox#pack () in
 
   (* status bar, displaying turn and messages *)
-  let bar = GMisc.statusbar ~packing:hbox#add () in
+  let bar = GMisc.statusbar ~packing:hbox#add ~width:100 () in
   let framepop = GBin.frame ~shadow_type:`IN ~packing:hbox#add () in
   let framefunds = GBin.frame ~shadow_type:`IN ~packing:hbox#pack () in
   let framehapp = GBin.frame ~shadow_type:`IN ~packing:hbox#add () in
