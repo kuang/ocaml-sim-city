@@ -600,7 +600,7 @@ let do_tuition n st =
   {
     st with tuition = n;
             happiness = let updated_happiness =
-                          st.happiness - ((n - st.tuition)/100) in
+                          st.happiness - ((n - st.tuition)/5000) in
               if updated_happiness < (-100) then -100
               else if updated_happiness > 100 then 100
               else updated_happiness
