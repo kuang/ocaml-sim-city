@@ -1,5 +1,3 @@
-(* Based on example pousse.ml from lablgtk2 *)
-
 open StdLabels
 open GMain
 open Gtk
@@ -8,6 +6,7 @@ open GBin
 open State
 open Json
 
+(* [initstate] generates the initial state for the GUI. *)
 let initstate = ref (match State.init_from_file "map.txt" with
     | Some m -> m
     | None -> State.init_state 25)
@@ -24,10 +23,13 @@ let road_pressed = ref false
 let pline_pressed = ref false
 let bulldoze_pressed = ref false
 
+(* [paused] is used for TimeStep. *)
 let paused = ref false
 
+(* [tuition] handles tuition updates set by the user. *)
 let tuition = ref ((!initstate).tuition)
 
+(* Messages for game introduction and instructions *)
 let welcome_mess = "Welcome to NOT SIM CITY, an open-ended University Simulator
 based on real-life experience at Cornell University!"
 let about_message = "Not Sim City: CS 3110 Final Project
@@ -156,6 +158,7 @@ class cell ~build ~terrain ?packing ?show () =
     | Pline -> pixpline
     | _ -> pixdining in
 
+  (* [cell] object *)
   object (self)
     inherit GObj.widget button#as_widget
     method connect = button#connect
@@ -163,6 +166,7 @@ class cell ~build ~terrain ?packing ?show () =
     val pm = GMisc.pixmap bldimg ~packing:button#add ()
     method building = building
     method terrain = terrain
+    (* Updates cell building *)
     method set_bld bld terr =
       if bld <> building then begin
         building <- bld;
@@ -224,17 +228,18 @@ class game ~(frame : #GContainer.container) ~(poplabel : #GMisc.label)
                    let b = (Array.get (Array.get !initstate.grid i) j).btype in
                    new cell ~build:b ~terrain:t ~packing:(table#attach ~top:i ~left:j) ()))
 
-    (* for the info displayed in bottom bar *)
+    (* Used for information displayed in bottom bar *)
     val poplabel = poplabel
     val happlabel = happlabel
     val fundslabel = fundslabel
 
-    (* message that is usually displayed in statusbar *)
+    (* Message normally displayed in statusbar *)
     val turn = statusbar#new_context ~name:"turn"
 
-    (* message that will flash in statusbar *)
+    (* Message that flashes in statusbar *)
     val messages = statusbar#new_context ~name:"messages"
 
+    (* Messages displayed in losebar *)
     val losestatus = losebar#new_context ~name:"lose_status"
     val dis_messages = losebar#new_context ~name:"dis_message"
 
@@ -243,30 +248,33 @@ class game ~(frame : #GContainer.container) ~(poplabel : #GMisc.label)
     val mutable current_building = Dorm
     val mutable state = !initstate
 
+    (* [make_message] generates a message from the current state if a message
+     * exists. *)
     method make_message =
       match state.message with
-      | Some m -> begin
-          let gen_message =
-            match m with
-            | "You Lost." -> "Quit"
-            | _ -> m in
-          GToolbox.message_box ~title:"Message" gen_message;
-          if gen_message = "Quit" then Main.quit ();
-        end
+      | Some m -> GToolbox.message_box ~title:"Message" m
       | None -> ()
 
+    (* [update_happlabel] updates the text for the happiness label on the
+     * bottom toolbar. *)
     method update_happlabel () =
       let newhapp = string_of_int (state.happiness) in
       happlabel#set_text (Printf.sprintf "Happiness: "^newhapp)
 
+    (* [update_poplabel] updates the text for the population label on the
+     * bottom toolbar. *)
     method update_poplabel () =
       let p = (State.get_num state.grid State.get_rpop) in
       poplabel#set_text (Printf.sprintf "Population: %d students" p)
 
+    (* [update_fundslabel] updates the text for the funds label on the
+     * bottom toolbar. *)
     method update_fundslabel () =
       let f = state.money in
       fundslabel#set_text (Printf.sprintf "Funds: $%d" f)
 
+    (* [update_build] updates the [current_building] based on which button on
+     * the upper toolbar was last pressed. *)
     method update_build () =
       current_building <- if !dorm_pressed then Dorm
         else if !lecture_pressed then Lecture
@@ -278,6 +286,7 @@ class game ~(frame : #GContainer.container) ~(poplabel : #GMisc.label)
         else if !bulldoze_pressed then Empty
         else Empty
 
+    (* [time_step] updates [state] by taking a TimeStep. *)
     method time_step =
       if not !paused then (
         state <- do' TimeStep state;
