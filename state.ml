@@ -236,6 +236,11 @@ let gen_disaster num =
 let get_rpop row =
   Array.fold_left (fun (acc:int) b  -> b.population + acc) 0 row
 
+(* [get_parks row] is the number of parks in [row] *)
+let get_parks row =
+  Array.fold_left (fun acc b  -> acc + if b.btype = Park then 1 else 0) 0 row
+
+(* [get_rmain row] is the total maintenance cost of all squares in [row] *)
 let get_rmain row =
   Array.fold_left (fun (acc:int) b -> b.maintenance_cost + acc) 0 row
 
@@ -598,8 +603,9 @@ let do_time st =
     | Some Blizzard -> blizzard_happiness
     | Some Prelim -> prelim_happiness
     | None -> 0 in
+  let parkshapp = get_num st.grid get_parks in
   let tuthapp = (st.tuition - 60000)/5000 in
-  let happ = max (st.happiness - dishapp - tuthapp) (-100) in
+  let happ = max (st.happiness - dishapp - tuthapp + parkshapp) (-100) in
   let grid = update_grid st happ st.grid in
   let pop = get_num grid get_rpop in
   let money = st.money - (get_num st.grid get_rmain) +
