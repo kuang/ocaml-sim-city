@@ -40,8 +40,8 @@ let empty_dcost = 0
 let dorm_init_pop = 20
 
 (*park happiness*)
-let park_happiness = 10
-let forest_happiness = 10
+let park_happiness = 25
+let forest_happiness = 5
 
 (* happiness deduction for natural disasters *)
 let fire_happiness = 5
