@@ -426,11 +426,6 @@ let ui_info = "<ui>\
                <menuitem action='Quit'/>\
                </menu>\
                <menu action='PreferencesMenu'>\
-               <menu action='DisasterMenu'>\
-               <menuitem action='Fire'/>\
-               <menuitem action='Blizzard'/>\
-               <menuitem action='Prelim'/>\
-               </menu>\
                <menuitem action='Pause'/>\
                </menu>\
                <menu action='HelpMenu'>\
@@ -504,15 +499,6 @@ let setup_ui window =
       ta "Pause" ~label:"_Pause"
         ~accel:"<control>P"
         ~callback:activ_action ~active:false ;
-
-      radio ~init_value:0 ~callback:(fun n -> Printf.printf "radio action %d\n%!" n)
-        [ ra "Fire" 0 ~label:"_Fire"
-            ~accel:"<control>F" ;
-          ra "Blizzard" 1 ~label:"_Blizzard"
-            ~accel:"<control>B" ;
-          ra "Prelim" 2 ~label:"_Prelim"
-            ~accel:"<control>R" ;
-        ] ;
     ] ;
 
   (* [ui_m] constructs the user interface from [ui_info] and actions *)
