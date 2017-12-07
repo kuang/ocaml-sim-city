@@ -323,12 +323,20 @@ class game ~(frame : #GContainer.container) ~(poplabel : #GMisc.label)
       | Section (x,y) -> "section"
 
     method play x y =
-      if state.lose then
-        let f = GToolbox.message_box ~title:"YOU LOSE" "You Lose." in
-        (f; Main.quit ())
-      else if self#updatestate x y then
+      if self#updatestate x y then
         (self#update_poplabel (); self#update_happlabel ();
-         self#update_fundslabel (); self#make_message;
+         self#update_fundslabel ();
+         if state.lose then
+           let loselist = ["Ok"; "Quit"] in
+           let lose_popup = GToolbox.question_box ~title:"YOU LOST"
+               ~buttons:loselist "You Lost." in
+           let next_lose_action b =
+             match b with
+             | 1 -> ()
+             | 2 -> Main.quit () in
+           next_lose_action lose_popup
+         else
+           self#make_message;
          for i = max (x-2) 0 to min (x+2) (size-1) do
            for j = max (y-2) 0 to min (y+2) (size-1) do
              let t = (Array.get (Array.get state.grid i) j).terrain in
