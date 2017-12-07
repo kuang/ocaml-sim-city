@@ -30,11 +30,11 @@ let dorm_dcost = 500
 let dining_dcost = 500
 let lecture_dcost = 500
 let power_dcost = 500
-let park_dcost = 50
+let park_dcost = 500
 let road_dcost = 10
 let pline_dcost = 10
-let section_dcost = 0
-let empty_dcost = 0
+let section_dcost = 500
+let empty_dcost = 10000000000
 
 (*dorm initial population*)
 let dorm_init_pop = 20

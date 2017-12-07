@@ -20,8 +20,6 @@ let road_pressed = ref false
 let pline_pressed = ref false
 let bulldoze_pressed = ref false
 
-let build_mode = ref true
-
 let welcome_mess = "Welcome to NOT SIM CITY, an open-ended University Simulator
 based on real-life experience at Cornell University!"
 let about_message = "Not Sim City: CS 3110 Final Project
@@ -123,7 +121,11 @@ let xpm_label_box ~file ~text ~packing () =
 
 (* cell: a button with a pixmap on it *)
 class cell ~build ~terrain ?packing ?show () =
+  (* Sets up tooltips for cell *)
+  let tooltips = GData.tooltips () in
   let button = GButton.button ?packing ?show ~relief:`NONE () in
+  let _ = tooltips#set_tip button#coerce
+      ~text:("Delete cost: $" ^ string_of_int (State.get_dcost build)) in
 
   let bldimg = match build with
     | Empty -> begin match terrain with
@@ -162,7 +164,8 @@ class cell ~build ~terrain ?packing ?show () =
                | Clear -> pixclear
                | Forest -> pixforest
                | Water -> pixwater end
-           | _ -> pixdining)
+           | _ -> pixdining); tooltips#set_tip button#coerce
+          ~text:("Delete cost: $" ^ string_of_int (State.get_dcost building))
       end
   end
 
@@ -401,11 +404,9 @@ let setup_ui window =
 
   let h_box2 = GPack.hbox ~packing:box1#pack  ~height:50 () in
 
+  (* [button_text] generates the text of the buttons on the top menu bar. *)
   let button_text str b =
-    str ^ ": $" ^ string_of_int (begin
-      if !build_mode then State.get_bcost b
-      else State.get_dcost b
-    end) in
+    str ^ ": $" ^ string_of_int (State.get_bcost b) in
 
   (* create button and put it in h_box1
    * - [~relief: `NONE] removes shadows around edge of button  *)
@@ -487,8 +488,6 @@ let setup_ui window =
       lecture_pressed := false; power_pressed := false;
       park_pressed := false; road_pressed := false;
       pline_pressed := false; bulldoze_pressed := true;
-      if !build_mode = true then build_mode := false
-      else build_mode := true;
       print_endline "Bulldoze button was pressed");
   xpm_label_box ~file:"bulldozer.xpm" ~text:"Bulldozer" ~packing:bulldoze#add ();
 
