@@ -198,9 +198,13 @@ let delete_tests = [
   "d_new3_daccess" >:: (fun _ -> assert_equal true (dorm1_new4.dining_access));
   "d_new3_laccess" >:: (fun _ -> assert_equal true (dorm1_new4.lec_access));
   "d_new3_paccess" >:: (fun _ -> assert_equal false (dorm1_new4.power_access));
-
 ]
 
+let st14 = do' (SetTuition 5) st13
+
+let setTuition_tests = [
+  "update_tuition" >:: (fun _ -> assert_equal 5 (st14.tuition));
+]
 
 let tests =
   "test suite for game"  >::: List.flatten [
@@ -211,6 +215,7 @@ let tests =
     rroad_tests;
     dining_tests;
     power_tests;
-    delete_tests
+    delete_tests;
+    setTuition_tests
   ]
 let _ = run_test_tt_main tests
