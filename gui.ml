@@ -7,7 +7,9 @@ open GToolbox
 open GBin
 open State
 
-let initstate = ref (State.init_state 25)
+let initstate = ref (match State.init_from_file "map.txt" with
+    | Some m -> m
+    | None -> State.init_state 25)
 
 let _ = GtkMain.Main.init ()
 
