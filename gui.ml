@@ -13,6 +13,7 @@ let initstate = ref (match State.init_from_file "map.txt" with
 
 let _ = GtkMain.Main.init ()
 
+(* Initialization for callback actions for upper toolbar *)
 let dorm_pressed = ref true
 let dining_pressed = ref false
 let lecture_pressed = ref false
@@ -87,7 +88,7 @@ end
 let window = GWindow.window ~title:"Not Sim City" ~position:`CENTER ~width:800 ~height:800 ~resizable:true ()
 
 
-(* Create pixmaps of buildings *)
+(* Creates pixmaps of building images *)
 let pixnone =
   GDraw.pixmap ~window ~width:20 ~height:20 ~mask:true ()
 let pixwater =
@@ -120,14 +121,15 @@ let xpm_label_box ~file ~text ~packing () =
   (* Create box for image and pack *)
   let box = GPack.hbox ~border_width:2 ~packing () in
 
-  (* make pixmap from file, put pixmap in box *)
+  (* Make pixmap from file, put pixmap in box *)
   let pixmap = GDraw.pixmap_from_xpm ~file () in
   GMisc.pixmap pixmap ~packing:(box#pack ~padding:3) ();
   GMisc.label ~text ~packing:(box#pack ~padding:3) ()
 
-(* cell: a button with a pixmap on it *)
+(* [cell] is a button with a pixmap on it. *)
 class cell ~build ~terrain ?packing ?show () =
-(* Sets up tooltips for cell *)
+
+  (* Sets up tooltips for cell *)
   let tooltips = GData.tooltips () in
   let button = GButton.button ?packing ?show ~relief:`NONE () in
   let _ = tooltips#set_tip button#coerce
@@ -138,7 +140,7 @@ class cell ~build ~terrain ?packing ?show () =
             | Water -> "Water" end
         | _ -> "Delete cost: $" ^
                string_of_int (State.get_dcost build) end) in
-
+  (* Associates pixmap with building *)
   let bldimg = match build with
     | Empty -> begin match terrain with
         | Clear -> pixclear
@@ -176,7 +178,9 @@ class cell ~build ~terrain ?packing ?show () =
                | Clear -> pixclear
                | Forest -> pixforest
                | Water -> pixwater end
-           | _ -> pixdining); tooltips#set_tip button#coerce
+           | _ -> pixdining);
+        (* Updates tooltip *)
+        tooltips#set_tip button#coerce
           ~text:(begin
               match building with
                   | Empty -> begin match terr with
@@ -327,13 +331,14 @@ class game ~(frame : #GContainer.container) ~(poplabel : #GMisc.label)
         (self#update_poplabel (); self#update_happlabel ();
          self#update_fundslabel ();
          if state.lose then
+           (* Generates popup button for losing *)
            let loselist = ["Ok"; "Quit"] in
            let lose_popup = GToolbox.question_box ~title:"YOU LOST"
                ~buttons:loselist "You Lost." in
            let next_lose_action b =
              match b with
-             | 1 -> ()
-             | 2 -> Main.quit () in
+             | 1 -> ()                (* Closes popup *)
+             | 2 -> Main.quit () in   (* Quits game *)
            next_lose_action lose_popup
          else
            self#make_message;
@@ -396,8 +401,7 @@ let ui_info = "<ui>\
                </menubar>\
                </ui>"
 
-(* [activ_action ac] is the result of clicking [ac]
- * Currently, it simply prints the action *)
+(* [activ_action ac] is the result of clicking [ac]. *)
 let activ_action ac =
   Printf.printf "Action '%s' activated\n" ac#name ;
   flush stdout;
@@ -461,31 +465,36 @@ let setup_ui window =
   window#add_accel_group ui_m#get_accel_group ;
   ui_m#add_ui_from_string ui_info ;
 
-  (* box1 contains the top menu bar thing, and is contained in vbox *)
+  (* [box1] contains the top menu bar, and is contained in vbox. *)
   let box1 = GPack.vbox ~packing:vbox#pack () in
   box1#pack (ui_m#get_widget "/MenuBar") ;
 
-  (* h_box1 will contain the house buttons, is in box1 *)
+  (* [h_box1] sets up the box containing the Dorm, Dining, Lecture, and
+   * Power Source buttons. *)
   let h_box1 = GPack.hbox ~packing:box1#pack ~height:50 () in
 
+  (* [h_box2] sets up the box containing the Park, Road, Power Line, and
+   * Bulldoze buttons. *)
   let h_box2 = GPack.hbox ~packing:box1#pack  ~height:50 () in
 
+  (* Returns a string with building costs (if applicable) for a button. *)
   let button_text str b =
     str ^ ": $" ^ string_of_int (State.get_bcost b) in
 
-  (* create button and put it in h_box1
-   * - [~relief: `NONE] removes shadows around edge of button  *)
+  (* [dorm_button] creates a button with the xpm_image and puts it in h_box1. *)
   let dorm_button = GButton.button ~packing:h_box1#add () in
-  (* connects the click to callback *)
+  (* Connects the click to callback *)
   dorm_button#connect#clicked ~callback:
     (fun () -> dorm_pressed := true; dining_pressed := false;
       lecture_pressed := false; power_pressed := false;
       park_pressed := false; road_pressed := false;
       pline_pressed := false; bulldoze_pressed := false);
-  (* create box with xpm image and put into button *)
+  (* Creates box with xpm image and put into button *)
   xpm_label_box ~file:"dorm.xpm" ~text:(button_text "Dorm" Dorm)
     ~packing:dorm_button#add ();
 
+  (* [dining_button] creates a button with the xpm_image and puts it in
+   * h_box1. *)
   let dining_button = GButton.button ~packing:h_box1#add () in
   dining_button#connect#clicked ~callback:
     (fun () -> dorm_pressed := false; dining_pressed := true;
@@ -495,6 +504,8 @@ let setup_ui window =
   xpm_label_box ~file:"dining.xpm" ~text:(button_text "Dining Hall" Dining)
     ~packing:dining_button#add ();
 
+  (* [lecture_button] creates a button with the xpm_image and puts it in
+   * h_box1. *)
   let lecture_button = GButton.button ~packing:h_box1#add () in
   lecture_button#connect#clicked ~callback:
     (fun () -> dorm_pressed := false; dining_pressed := false;
@@ -504,6 +515,8 @@ let setup_ui window =
   xpm_label_box ~file:"lecture.xpm" ~text:(button_text "Lecture Hall" Lecture)
     ~packing:lecture_button#add ();
 
+  (* [power_button] creates a button with the xpm_image and puts it in
+   * h_box1. *)
   let power_button = GButton.button ~packing:h_box1#add () in
   power_button#connect#clicked ~callback:
     (fun () -> dorm_pressed := false; dining_pressed := false;
@@ -513,6 +526,7 @@ let setup_ui window =
   xpm_label_box ~file:"power.xpm" ~text:(button_text "Power Source" Power)
     ~packing:power_button#add ();
 
+  (* [park_button] creates a button with the xpm_image and puts it in h_box2. *)
   let park_button = GButton.button ~packing:h_box2#add () in
   park_button#connect#clicked ~callback:
     (fun () -> dorm_pressed := false; dining_pressed := false;
@@ -522,6 +536,7 @@ let setup_ui window =
   xpm_label_box ~file:"park.xpm" ~text:(button_text "Park" Park)
     ~packing:park_button#add ();
 
+  (* [road_button] creates a button with the xpm_image and puts it in h_box2. *)
   let road_button = GButton.button ~packing:h_box2#add () in
   road_button#connect#clicked ~callback:
     (fun () -> dorm_pressed := false; dining_pressed := false;
@@ -531,6 +546,8 @@ let setup_ui window =
   xpm_label_box ~file:"road.xpm" ~text:(button_text "Road" Road)
     ~packing:road_button#add ();
 
+  (* [pline_button] creates a button with the xpm_image and puts it in
+   * h_box2. *)
   let pline_button = GButton.button ~packing:h_box2#add () in
   pline_button#connect#clicked ~callback:
     (fun () -> dorm_pressed := false; dining_pressed := false;
@@ -540,6 +557,7 @@ let setup_ui window =
   xpm_label_box ~file:"pline.xpm" ~text:(button_text "Power Line" Pline)
     ~packing:pline_button#add ();
 
+  (* [bulldoze] creates a button with the xpm_image and puts it in h_box2. *)
   let bulldoze = GButton.button ~packing:h_box2#add () in
   bulldoze#connect#clicked ~callback:
     (fun () -> dorm_pressed := false; dining_pressed := false;
@@ -582,6 +600,8 @@ let setup_ui window =
     let tbox1 = GPack.vbox ~packing:tuition_window#add () in
     let tbox2 = GPack.vbox ~spacing:10 ~border_width:50 ~packing:tbox1#add () in
 
+    (* The following buttons implement the different button options in
+     * [tuition_window]; they are put in tbox2. *)
     let button_zero = GButton.radio_button ~label:"$0" ~active:(!tuition=0)
         ~packing:tbox2#add () in
     let button_ten = GButton.radio_button ~group:button_zero#group
@@ -609,6 +629,8 @@ let setup_ui window =
 
     let tbox3 = GPack.vbox ~spacing:10 ~border_width:10 ~packing:tbox1#pack () in
 
+    (* [set_tuition] sets [tuition] resulting from the final button choice
+     * clicked in [tuition_window]. *)
     let set_tuition () =
       tuition := (if button_zero#active then 0
         else if button_ten#active then 10000
@@ -624,6 +646,7 @@ let setup_ui window =
         else !tuition)
     in
 
+    (* [submit_button] in tbox3 closes [tuition_window] when clicked. *)
     let submit_button = GButton.button ~label:"Submit" ~packing:tbox3#add () in
     submit_button#connect#clicked
       ~callback:(fun () -> set_tuition (); tuition_window#destroy ());
