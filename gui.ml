@@ -7,7 +7,9 @@ open GToolbox
 open GBin
 open State
 
-let initstate = ref (State.init_state 25)
+let initstate = ref (match State.init_from_file "map.txt" with
+    | Some m -> m
+    | None -> State.init_state 25)
 
 let _ = GtkMain.Main.init ()
 
@@ -272,20 +274,20 @@ class game ~(frame : #GContainer.container) ~(poplabel : #GMisc.label)
         else Empty
 
     method time_step =
-      state <- do' TimeStep state;
-      turn#pop ();
-      turn#push ("Current Date: " ^ get_time_passed state);
-      let m = match state.message with
-        | None -> "University is up and running"
-        | Some mess -> mess
-      in
-      if state.lose then losestatus#pop (); losestatus#push m;
-      if state.disaster <> None then
-         dis_messages#flash m;
-      self#update_happlabel ();
-      self#update_poplabel ();
-      self#update_fundslabel ()
-     (* self#make_message; *)
+      if not !paused then (
+        state <- do' TimeStep state;
+        turn#pop ();
+        turn#push ("Current Date: " ^ get_time_passed state);
+        let m = match state.message with
+          | None -> "University is up and running"
+          | Some mess -> mess
+        in
+        if state.lose then losestatus#pop (); losestatus#push m;
+        if state.disaster <> None then
+           dis_messages#flash m;
+        self#update_happlabel ();
+        self#update_poplabel ();
+        self#update_fundslabel ())
 
     method start_time : unit Async_kernel.Deferred.t = Async.(
       after (Core.sec 5.) >>= fun _ ->
