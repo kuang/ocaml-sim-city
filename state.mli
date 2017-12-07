@@ -7,6 +7,8 @@ type terrain = Water | Forest | Clear
 (* [disaster] represents the different types of natural disaster events. *)
 type disaster = Fire | Blizzard | Prelim
 
+
+
 (* [building_type] is a type encompassing the different options for what can be
  * "built" on a square. Dorm represents dorm buildings, Resource represents
  * resource buildings, Road and Pline represent roads and power line
@@ -108,6 +110,9 @@ val get_rpop : square array -> int
 
 (* [get_num st f] is the sum of [f x] over all squares [x] in [st.grid] *)
 val get_num : square array array -> (square array -> int) -> int
+
+(*exposed getter for a given square. If out of bounds, returns None. *)
+val get_square : gamestate -> int -> int -> square option
 
 (* [do' command gamestate] applies [command] to [gamestate] and returns a
  * gamestate object representing the new state of game. *)

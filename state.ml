@@ -205,6 +205,12 @@ let get_happiness (st:gamestate) : int = st.happiness
 
 let get_money (st:gamestate) : int = st.money
 
+let get_square st x y =
+  let maxlen = (Array.length st.grid)-1 in
+  if(x<0 || y<0 || x>maxlen || y>maxlen) then
+    None
+  else Some st.grid.(x).(y)
+
 (* returns: [month] is the current month calculated from time passed (number
  * of turns so far).
  * requires: turns is the number of turns so far. *)
