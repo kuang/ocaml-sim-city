@@ -258,7 +258,8 @@ let get_num grid f : int =
 let update_build happ (b : square) =
   match b.btype with
   | Dorm -> begin
-      let newpop = b.population + (b.level+1)*happ (* MADE UP NUMBERS*) in {
+  let newpop = if (b.dining_access && b.lec_access && b.power_access) then
+      b.population + (b.level+1)*happ else 0 (* MADE UP NUMBERS*) in {
     b with btype = b.btype;
     level = newpop / 500; (* MADE UP NUMBERS*)
     maintenance_cost = (newpop / 500)*dorm_mcost;  (* MADE UP NUMBERS*)
