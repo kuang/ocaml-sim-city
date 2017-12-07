@@ -119,13 +119,13 @@ let pixpline =
 let xpm_label_box ~file ~text ~packing () =
   if not (Sys.file_exists file) then failwith (file ^ " does not exist");
 
-  (* Create box for image and pack *)
-  let box = GPack.hbox ~border_width:2 ~packing () in
+(* Create box for image and pack *)
+let box = GPack.hbox ~border_width:2 ~packing () in
 
-  (* Make pixmap from file, put pixmap in box *)
-  let pixmap = GDraw.pixmap_from_xpm ~file () in
-  GMisc.pixmap pixmap ~packing:(box#pack ~padding:3) ();
-  GMisc.label ~text ~packing:(box#pack ~padding:3) ()
+(* Make pixmap from file, put pixmap in box *)
+let pixmap = GDraw.pixmap_from_xpm ~file () in
+GMisc.pixmap pixmap ~packing:(box#pack ~padding:3) ();
+GMisc.label ~text ~packing:(box#pack ~padding:3) ()
 
 (* [cell] is a button with a pixmap on it. *)
 class cell ~build ~terrain ?packing ?show () =
@@ -204,7 +204,7 @@ module GameGrid = Grid (
   )
 
 
-(* Conducting a game *)
+(* Conducts a game *)
 open GameGrid
 
 class game ~(frame : #GContainer.container) ~(poplabel : #GMisc.label)
@@ -372,11 +372,11 @@ class game ~(frame : #GContainer.container) ~(poplabel : #GMisc.label)
   end
 
 
-(* Graphical stuff *)
+(* Other graphics *)
 
 let vbox = GPack.vbox ~packing:window#add ()
 
-(* top menu bar *)
+(* Top click-down menu bar *)
 let ui_info = "<ui>\
                <menubar name='MenuBar'>\
                <menu action='FileMenu'>\
@@ -410,9 +410,10 @@ let activ_action ac =
   | "About" -> GToolbox.message_box ~title:"About" about_message
   | "Pause" -> paused := not !paused
   | "Save" -> let save = GToolbox.select_file ~title:"Save" () in
-    ( match save with
-    | Some n -> if Json.save_state n !initstate then () else GToolbox.message_box ~title:"Save" "Failed to save"
-    | None -> GToolbox.message_box ~title:"Save" "Failed to save" )
+    (match save with
+     | Some n -> if Json.save_state n !initstate then () else
+         GToolbox.message_box ~title:"Save" "Failed to save"
+     | None -> GToolbox.message_box ~title:"Save" "Failed to save" )
   | "Quit" -> window#destroy ()
   | _ -> ()
 
@@ -481,7 +482,8 @@ let setup_ui window =
    * Bulldoze buttons. *)
   let h_box2 = GPack.hbox ~packing:box1#pack  ~height:50 () in
 
-  (* Returns a string with building costs (if applicable) for a button. *)
+  (* [button_text] returns a string with building costs (if applicable)
+   * for a button. *)
   let button_text str b =
     str ^ ": $" ^ string_of_int (State.get_bcost b) in
 
