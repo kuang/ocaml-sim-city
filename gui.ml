@@ -275,6 +275,7 @@ class game ~(frame : #GContainer.container) ~(poplabel : #GMisc.label)
         else Empty
 
     method time_step =
+<<<<<<< HEAD
       state <- do' (SetTuition !tuition) state;
       state <- do' TimeStep state;
       initstate := state;
@@ -291,6 +292,22 @@ class game ~(frame : #GContainer.container) ~(poplabel : #GMisc.label)
       self#update_poplabel ();
       self#update_fundslabel ()
      (* self#make_message; *)
+=======
+      if not !paused then (
+        state <- do' TimeStep state;
+        turn#pop ();
+        turn#push (get_time_passed state);
+        let m = match state.message with
+          | None -> "University is up and running"
+          | Some mess -> mess
+        in
+        if state.lose then losestatus#pop (); losestatus#push m;
+        if state.disaster <> None then
+           dis_messages#flash m;
+        self#update_happlabel ();
+        self#update_poplabel ();
+        self#update_fundslabel ())
+>>>>>>> 7bf8990e376bab6cee64c71c91271d26889a4f6a
 
     method start_time : unit Async_kernel.Deferred.t = Async.(
       after (Core.sec 5.) >>= fun _ ->
@@ -326,6 +343,7 @@ class game ~(frame : #GContainer.container) ~(poplabel : #GMisc.label)
       | Section (x,y) -> "section"
 
     method play x y =
+<<<<<<< HEAD
       if state.lose then
         let f = GToolbox.message_box ~title:"YOU LOSE" "You Lose." in
         (f; Main.quit ())
@@ -333,6 +351,22 @@ class game ~(frame : #GContainer.container) ~(poplabel : #GMisc.label)
         (initstate := state; self#update_poplabel (); self#update_happlabel ();
          self#update_fundslabel (); self#make_message;
          turn#pop(); turn#push ("Current Date: "^(State.get_time_passed state));
+=======
+      if self#updatestate x y then
+        (self#update_poplabel (); self#update_happlabel ();
+         self#update_fundslabel ();
+         if state.lose then
+           let loselist = ["Ok"; "Quit"] in
+           let lose_popup = GToolbox.question_box ~title:"YOU LOST"
+               ~buttons:loselist "You Lost." in
+           let next_lose_action b =
+             match b with
+             | 1 -> ()
+             | 2 -> Main.quit () in
+           next_lose_action lose_popup
+         else
+           self#make_message;
+>>>>>>> 7bf8990e376bab6cee64c71c91271d26889a4f6a
          for i = max (x-2) 0 to min (x+2) (size-1) do
            for j = max (y-2) 0 to min (y+2) (size-1) do
              let t = (Array.get (Array.get state.grid i) j).terrain in
@@ -356,7 +390,7 @@ class game ~(frame : #GContainer.container) ~(poplabel : #GMisc.label)
       self#update_poplabel ();
       self#update_happlabel ();
       self#update_fundslabel ();
-      turn#push "Current Date: Apr 1865";
+      turn#push (get_time_passed state);
       Async.(Thread.create Scheduler.go ());
       ()
   end
