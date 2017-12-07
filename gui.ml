@@ -245,14 +245,7 @@ class game ~(frame : #GContainer.container) ~(poplabel : #GMisc.label)
 
     method make_message =
       match state.message with
-      | Some m -> begin
-          let gen_message =
-            match m with
-            | "You Lost." -> "Quit"
-            | _ -> m in
-          GToolbox.message_box ~title:"Message" gen_message;
-          if gen_message = "Quit" then Main.quit ();
-        end
+      | Some m -> GToolbox.message_box ~title:"Message" m;
       | None -> ()
 
     method update_happlabel () =
