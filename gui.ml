@@ -351,6 +351,7 @@ class game ~(frame : #GContainer.container) ~(poplabel : #GMisc.label)
              | 2 -> Main.quit () in   (* Quits game *)
            next_lose_action lose_popup
          else
+           (* Generate message from current state *)
            self#make_message;
          for i = max (x-2) 0 to min (x+2) (size-1) do
            for j = max (y-2) 0 to min (y+2) (size-1) do
@@ -412,7 +413,6 @@ let ui_info = "<ui>\
 
 (* [activ_action ac] is the result of clicking [ac]. *)
 let activ_action ac =
-  (* Printf.printf "Action '%s' activated\n" ac#name ; *)
   flush stdout;
   match ac#name with
   | "New" -> GToolbox.message_box ~title:"New Game" new_message
@@ -439,13 +439,10 @@ let setup_ui window =
       a "DisasterMenu" ~label:"_Disaster" ;
       a "HelpMenu" ~label:"_Help" ;
 
-      (* - first string is the action name, which is the same as in ui_info
-       * - next is the GtkStock.id, which is prebuilt common menu/toolbar items
-       *   and corresponding icons
-       * - tooltip should display when hovering, but doesn't right now for
-       *   unknown reasons
-       * - callback is what happens when clicked
-       * - accel is the keyboard shortcut *)
+      (* Menu Items: First string: Action name corresponding to [ui_info]
+       * [stock]: prebuilt common menu/toolbar items and corresponding icons
+       * [callback]: what happens when button is clicked
+       * [accel]: keyboard shortcut *)
       a "New" ~stock:`NEW ~tooltip:"Create a new file"
         ~callback:activ_action ;
       a "Open" ~stock:`OPEN ~tooltip:"Open a file"
@@ -473,7 +470,7 @@ let setup_ui window =
         ] ;
     ] ;
 
-  (* UI manager constructs the user interface from the ui_info and actions *)
+  (* [ui_m] constructs the user interface from [ui_info] and actions *)
   let ui_m = GAction.ui_manager () in
   ui_m#insert_action_group actions 0 ;
   window#add_accel_group ui_m#get_accel_group ;
@@ -581,42 +578,50 @@ let setup_ui window =
       pline_pressed := false; bulldoze_pressed := true);
   xpm_label_box ~file:"bulldozer.xpm" ~text:"Bulldozer" ~packing:bulldoze#add ();
 
-  (* horizontal line *)
+  (* Horizontal line between top menu bar and grid *)
   GMisc.separator `HORIZONTAL ~packing:box1#pack () ;
 
-  (* frame for game *)
-  (* let frame = GBin.frame ~shadow_type:`IN ~packing:box1#add () in *)
+  (* Frame for game *)
   let frame = GBin.scrolled_window ~border_width:10
       ~hpolicy:`AUTOMATIC ~vpolicy:`AUTOMATIC ~packing:vbox#add () in
 
-  (* box at bottom *)
+  (* Box for status and lose bars at the bottom of [window] *)
   let hbox_time = GPack.hbox ~packing:vbox#pack () in
   let hbox = GPack.hbox ~packing:vbox#pack () in
 
-  (* status bar, displaying turn and messages *)
+  (* Sets up status bar that displays turn and messages *)
   let bar = GMisc.statusbar ~packing:hbox#add ~width:100 () in
   let framepop = GBin.frame ~shadow_type:`IN ~packing:hbox#add () in
   let framefunds = GBin.frame ~shadow_type:`IN ~packing:hbox#pack () in
   let framehapp = GBin.frame ~shadow_type:`IN ~packing:hbox#add () in
 
-  (* label displaying population and money *)
-  let pop = GMisc.label ~justify:`LEFT ~xpad:5 ~xalign:0.0 ~packing:framepop#add () in
-  let funds = GMisc.label ~justify:`LEFT ~xpad:5 ~xalign:0.0 ~packing:framefunds#add () in
-  let happ = GMisc.label ~justify:`LEFT ~xpad:5 ~xalign:0.0 ~packing:framehapp#add () in
+  (* Labels on bottom bar that display population, money, and happiness *)
+  let pop = GMisc.label ~justify:`LEFT ~xpad:5 ~xalign:0.0
+      ~packing:framepop#add () in
+  let funds = GMisc.label ~justify:`LEFT ~xpad:5 ~xalign:0.0
+      ~packing:framefunds#add () in
+  let happ = GMisc.label ~justify:`LEFT ~xpad:5 ~xalign:0.0
+      ~packing:framehapp#add () in
 
-  let losebar = GMisc.statusbar ~packing:hbox_time#add ~height:30 ~has_resize_grip:false () in
+  (* Sets up losebar at the bottom of [window] *)
+  let losebar = GMisc.statusbar ~packing:hbox_time#add ~height:30
+      ~has_resize_grip:false () in
 
   (* [tuition_window] is a window that pops up once the user_tuition button
    * ("Change Tuition") is clicked. *)
   let add_tuition () = (
-    let tuition_window = GWindow.window ~title:"Set Tuition"  ~position:`CENTER ~border_width:0 () in
+    let tuition_window = GWindow.window ~title:"Set Tuition"
+        ~position:`CENTER ~border_width:0 () in
       tuition_window#connect#destroy ~callback:tuition_window#destroy;
 
+    (* [tbox1] sets up a vbox in [tuition_window]. *)
     let tbox1 = GPack.vbox ~packing:tuition_window#add () in
+
+    (* [tbox2] sets up a vbox in [tbox1] for the radio buttons. *)
     let tbox2 = GPack.vbox ~spacing:10 ~border_width:50 ~packing:tbox1#add () in
 
     (* The following buttons implement the different button options in
-     * [tuition_window]; they are put in tbox2. *)
+     * [tuition_window]; they are put in [tbox2]. *)
     let button_zero = GButton.radio_button ~label:"$0" ~active:(!tuition=0)
         ~packing:tbox2#add () in
     let button_ten = GButton.radio_button ~group:button_zero#group
@@ -640,8 +645,11 @@ let setup_ui window =
     let button_hundred = GButton.radio_button ~group:button_zero#group
         ~label:"$100000" ~active:(!tuition=100000) ~packing:tbox2#add () in
 
+    (* Creates line between [tbox2] for the radio buttons and [tbox3] that
+     * holds the [submit_button]. *)
     let separator = GMisc.separator `HORIZONTAL ~packing: tbox1#pack () in
 
+    (* [tbox3] is a vbox that holds [submit_button]. *)
     let tbox3 = GPack.vbox ~spacing:10 ~border_width:10 ~packing:tbox1#pack () in
 
     (* [set_tuition] sets [tuition] resulting from the final button choice
@@ -666,48 +674,73 @@ let setup_ui window =
     submit_button#connect#clicked
       ~callback:(fun () -> set_tuition (); tuition_window#destroy ());
 
+    (* Shows tuition window in GUI. *)
     tuition_window#show ()) in
 
+  (* [user_tuition] is the ("Change Tuition") button at the bottom toolbar that
+   * opens [tuition_window] when clicked. *)
   let user_tuition = GButton.button ~label:"Change Tuition" ~packing:hbox#add () in
   user_tuition#connect#clicked
     ~callback: (fun () -> add_tuition ());
 
+  (* [buttonslist] is the text for the different buttons for [beginbox]. *)
   let buttonslist = ["Instructions";"Map from file";"Map from size"] in
+
+  (* [sizelist] is the text for the different size option buttons. *)
   let sizelist = ["20x20";"30x30";"40x40"] in
 
-  let beginbox = GToolbox.question_box ~title:"Welcome!" ~buttons:buttonslist welcome_mess in
+  (* [beginbox] is the first question box that appears in the GUI that
+   * welcomes users to the game by providing instructions, opening a text file,
+   * or letting users choose from a pre-generated text file size. *)
+  let beginbox = GToolbox.question_box ~title:"Welcome!"
+      ~buttons:buttonslist welcome_mess in
 
+  (* [nextbutton] generates the next button based on [b]. *)
   let rec nextbutton b = match b with
-    | 1 -> let abt = GToolbox.question_box ~title:"Instructions" ~buttons:buttonslist about_message in
+    | 1 -> (* Lists instructions and re-displays [beginbox] choices *)
+      let abt = GToolbox.question_box ~title:"Instructions"
+               ~buttons:buttonslist about_message in
       nextbutton abt
-    | 2 -> (let t = GToolbox.select_file ~title:"Select File" () in
+    | 2 -> (* Enables user to import a valid text file map. Starts game with
+            * a default map if chosen text file is not a valid map. *)
+      (let t = GToolbox.select_file ~title:"Select File" () in
             match t with
             | Some m -> (initstate := match (State.init_from_file m) with
                 | Some st -> st
-                | None -> GToolbox.message_box ~title:"Select File"
-                            "Cannot load map from file - using default map"; !initstate)
-            | None ->  GToolbox.message_box ~title:"Select File" "No file selected - using default map")
-    | 3 -> (let numbox = GToolbox.question_box ~title:"Choose Size" ~buttons:sizelist "Choose your map size" in
-            match numbox with
-            | 1 -> (initstate := match (State.init_from_file "default20.txt") with
-                | Some st -> st
-                | None -> GToolbox.message_box ~title:"Choose Size"
-                            "Cannot access 20x20 map - using default map"; !initstate)
-            | 2 -> (initstate := match State.init_from_file "default30.txt" with
-                | Some st -> st
-                | None -> GToolbox.message_box ~title:"Choose Size"
-                            "Cannot access 30x30 map - using default map"; !initstate)
-            | 3 -> (initstate := match State.init_from_file "default40.txt" with
-                | Some st -> st
-                | None -> GToolbox.message_box ~title:"Choose Size"
-                            "Cannot access 40x40 map - using default map"; !initstate))
+                | None ->
+                  GToolbox.message_box ~title:"Select File"
+                    "Cannot load map from file - using default map";
+                  !initstate)
+            | None ->  GToolbox.message_box ~title:"Select File"
+                         "No file selected - using default map")
+    | 3 -> (* Enables user to choose the size of a default map based on sizes
+            * provided in [sizelist]. *)
+      (let numbox = GToolbox.question_box ~title:"Choose Size"
+           ~buttons:sizelist "Choose your map size" in
+       match numbox with
+       | 1 -> (initstate :=
+          match (State.init_from_file "default20.txt") with
+           | Some st -> st
+           | None -> GToolbox.message_box ~title:"Choose Size"
+                       "Cannot access 20x20 map - using default map";
+             !initstate)
+       | 2 -> (initstate := match State.init_from_file "default30.txt" with
+           | Some st -> st
+           | None -> GToolbox.message_box ~title:"Choose Size"
+                       "Cannot access 30x30 map - using default map";
+             !initstate)
+       | 3 -> (initstate := match State.init_from_file "default40.txt" with
+           | Some st -> st
+           | None -> GToolbox.message_box ~title:"Choose Size"
+                       "Cannot access 40x40 map - using default map";
+             !initstate))
   in nextbutton beginbox;
 
-  new game ~frame ~poplabel:pop ~fundslabel:funds ~happlabel:happ ~statusbar:bar ~losebar:losebar
+  (* Creates new game *)
+  new game ~frame ~poplabel:pop ~fundslabel:funds ~happlabel:happ
+    ~statusbar:bar ~losebar:losebar
 
-
-
-(* Start *)
+(* Runs the GUI. *)
 let _ =
   window#connect#destroy ~callback:Main.quit;
   setup_ui window ;
