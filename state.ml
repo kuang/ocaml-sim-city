@@ -48,6 +48,7 @@ let fire_happiness = 5
 let blizzard_happiness = 15
 let prelim_happiness = 10
 
+(* state initial settings *)
 let init_money = 100000
 let init_tuition = 20000
 
@@ -76,7 +77,7 @@ type square = {
 type gamestate = {
   disaster : disaster option;
   lose : bool;
-  message : string option; (*possible prompt for the user*)
+  message : string option;
   money : int;
   tuition : int;
   happiness: int;
@@ -131,6 +132,7 @@ type command =
   | SetTuition of int
   | TimeStep
 
+(*creates an initial square.*)
 let init_square = {
   btype = Empty;
   level = 0;
@@ -142,6 +144,7 @@ let init_square = {
   power_access = false;
 }
 
+(*creates an initial gamestate. *)
 let init_state (grid_size:int)= {
   disaster = None;
   lose = false;
@@ -219,6 +222,8 @@ let month turns =
 let year turns =
   string_of_int (((turns + 3) / 12) + 1865)
 
+
+(*returns time_passed of [st] as a string.*)
 let get_time_passed (st:gamestate)  =
   month st.time_passed ^ year st.time_passed
 
