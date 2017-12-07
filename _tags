@@ -1,0 +1,2 @@
+true: package(oUnit),package(yojson),package(async)
+<**/*>: thread

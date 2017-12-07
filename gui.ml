@@ -232,6 +232,16 @@ class game ~(frame : #GContainer.container) ~(label : #GMisc.label)
         else if !bulldoze_pressed then Empty
         else Empty
 
+    method time_step =
+      state <- do' TimeStep state;
+      turn#pop ();
+      turn#push ("Current Date: " ^ get_time_passed state)
+
+    method start_time : unit Async_kernel.Deferred.t = Async.(
+      after (Core.sec 5.) >>= fun _ ->
+      self#time_step;
+      self#start_time )
+
     method updatestate x y : bool =
       try (self#update_build (); state <- match current_building with
           | Empty -> turn#pop ();
@@ -285,7 +295,6 @@ class game ~(frame : #GContainer.container) ~(label : #GMisc.label)
              let bld = match b with
                | Section (x,y) -> (Array.get (Array.get state.grid x) y).btype
                | _ -> b in
-             print_endline ((string_of_int i)^(self#btostring bld));
              action cells i j t bld
            done done)
 
@@ -297,8 +306,9 @@ class game ~(frame : #GContainer.container) ~(label : #GMisc.label)
         done done;
 
       self#update_label ();
-        turn#push "Current Date: Apr 1865";
-        ()
+      turn#push "Current Date: Apr 1865";
+      self#start_time;
+      Async.(Thread.create Scheduler.go ()); ()
   end
 
 
@@ -416,8 +426,7 @@ let setup_ui window =
     (fun () -> dorm_pressed := true; dining_pressed := false;
       lecture_pressed := false; power_pressed := false;
       park_pressed := false; road_pressed := false;
-      pline_pressed := false; bulldoze_pressed := false;
-      print_endline "Dorm button was pressed") ;
+      pline_pressed := false; bulldoze_pressed := false);
   (* create box with xpm image and put into button *)
   xpm_label_box ~file:"dorm.xpm" ~text:(button_text "Dorm" Dorm)
     ~packing:dorm_button#add ();
@@ -427,8 +436,7 @@ let setup_ui window =
     (fun () -> dorm_pressed := false; dining_pressed := true;
       lecture_pressed := false; power_pressed := false;
       park_pressed := false; road_pressed := false;
-      pline_pressed := false; bulldoze_pressed := false;
-      print_endline "Dining button was pressed");
+      pline_pressed := false; bulldoze_pressed := false);
   xpm_label_box ~file:"dining.xpm" ~text:(button_text "Dining Hall" Dining)
     ~packing:dining_button#add ();
 
@@ -437,8 +445,7 @@ let setup_ui window =
     (fun () -> dorm_pressed := false; dining_pressed := false;
       lecture_pressed := true; power_pressed := false;
       park_pressed := false; road_pressed := false;
-      pline_pressed := false; bulldoze_pressed := false;
-      print_endline "Lecture button was pressed");
+      pline_pressed := false; bulldoze_pressed := false);
   xpm_label_box ~file:"lecture.xpm" ~text:(button_text "Lecture Hall" Lecture)
     ~packing:lecture_button#add ();
 
@@ -447,8 +454,7 @@ let setup_ui window =
     (fun () -> dorm_pressed := false; dining_pressed := false;
       lecture_pressed := false; power_pressed := true;
       park_pressed := false; road_pressed := false;
-      pline_pressed := false; bulldoze_pressed := false;
-      print_endline "Power button was pressed");
+      pline_pressed := false; bulldoze_pressed := false);
   xpm_label_box ~file:"power.xpm" ~text:(button_text "Power Source" Power)
     ~packing:power_button#add ();
 
@@ -457,8 +463,7 @@ let setup_ui window =
     (fun () -> dorm_pressed := false; dining_pressed := false;
       lecture_pressed := false; power_pressed := false;
       park_pressed := true; road_pressed := false;
-      pline_pressed := false; bulldoze_pressed := false;
-      print_endline "Park button was pressed");
+      pline_pressed := false; bulldoze_pressed := false);
   xpm_label_box ~file:"park.xpm" ~text:(button_text "Park" Park)
     ~packing:park_button#add ();
 
@@ -467,8 +472,7 @@ let setup_ui window =
     (fun () -> dorm_pressed := false; dining_pressed := false;
       lecture_pressed := false; power_pressed := false;
       park_pressed := false; road_pressed := true;
-      pline_pressed := false; bulldoze_pressed := false;
-      print_endline "Road button was pressed");
+      pline_pressed := false; bulldoze_pressed := false);
   xpm_label_box ~file:"road.xpm" ~text:(button_text "Road" Road)
     ~packing:road_button#add ();
 
@@ -477,8 +481,7 @@ let setup_ui window =
     (fun () -> dorm_pressed := false; dining_pressed := false;
       lecture_pressed := false; power_pressed := false;
       park_pressed := false; road_pressed := false;
-      pline_pressed := true; bulldoze_pressed := false;
-      print_endline "Power line button was pressed");
+      pline_pressed := true; bulldoze_pressed := false);
   xpm_label_box ~file:"power.xpm" ~text:(button_text "Power Line" Pline)
     ~packing:pline_button#add ();
 
@@ -487,8 +490,7 @@ let setup_ui window =
     (fun () -> dorm_pressed := false; dining_pressed := false;
       lecture_pressed := false; power_pressed := false;
       park_pressed := false; road_pressed := false;
-      pline_pressed := false; bulldoze_pressed := true;
-      print_endline "Bulldoze button was pressed");
+      pline_pressed := false; bulldoze_pressed := true);
   xpm_label_box ~file:"bulldozer.xpm" ~text:"Bulldozer" ~packing:bulldoze#add ();
 
   (* horizontal line *)
@@ -509,15 +511,11 @@ let setup_ui window =
   (* label displaying population and money *)
   let label = GMisc.label ~justify:`LEFT ~xpad:5 ~xalign:0.0 ~packing:frame2#add () in
 
-  let delete_event ev =
-    print_endline "deleted"; true in
-
-
   let add_tuition () =
     (* [tuition_window] is a window that pops up once the user_tuition button
      * ("Change Tuition") is clicked. *)
     (let tuition_window = GWindow.window ~title:"Set Tuition" ~border_width:0 () in
-    tuition_window#event#connect#delete ~callback:delete_event;
+    tuition_window#event#connect#delete ~callback:(fun _ -> true);
     tuition_window#connect#destroy ~callback:tuition_window#destroy;
 
     let tbox1 = GPack.vbox ~packing:tuition_window#add () in
@@ -575,8 +573,7 @@ let setup_ui window =
 
   let user_tuition = GButton.button ~label:"Change Tuition" ~packing:hbox#add () in
   user_tuition#connect#clicked
-    ~callback: (fun () -> add_tuition ();
-                 print_endline "User tuition button was pressed");
+    ~callback: add_tuition;
 
   let filebutton = GButton.button () in
   filebutton#connect#clicked ~callback:

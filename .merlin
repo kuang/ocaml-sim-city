@@ -1,5 +1,4 @@
 B _build
 PKG OUnit2
 PKG yojson
-PKG str
-PKG ANSITerminal
+PKG async
