@@ -248,12 +248,13 @@ let get_num grid f : int =
 let update_build st happ (b : square) =
   match b.btype with
   | Dorm -> begin
-  let newpop = if (b.dining_access && b.lec_access && b.power_access) then
-      b.population + (b.level+1)*happ else 0 (* MADE UP NUMBERS*) in {
+  let newpop = max 0 (if (b.dining_access && b.lec_access && b.power_access) then
+                        b.population + (b.level+1)*happ else 0) (* MADE UP NUMBERS*)
+  in {
     b with btype = b.btype;
     level = newpop / 500; (* MADE UP NUMBERS*)
     maintenance_cost = (newpop / 500)*dorm_mcost;  (* MADE UP NUMBERS*)
-    population = if st.time_passed > 11 then newpop else max newpop 0;
+    population = newpop;
     }
     end
   | _ -> b
@@ -598,7 +599,8 @@ let do_time st =
     | Some Blizzard -> blizzard_happiness
     | Some Prelim -> prelim_happiness
     | None -> 0 in
-  let happ = max (st.happiness - dishapp) (-100) in
+  let tuthapp = (st.tuition - 60000)/5000 in
+  let happ = max (st.happiness - dishapp - tuthapp) (-100) in
   let grid = update_grid st happ st.grid in
   let pop = get_num grid get_rpop in
   let money = st.money - (get_num st.grid get_rmain) +
