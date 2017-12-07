@@ -288,7 +288,6 @@ class game ~(frame : #GContainer.container) ~(label : #GMisc.label)
       for i = 0 to size-1 do
         for j = 0 to size-1 do
           let cell = cells.(i).(j) in
-          cell#connect#enter ~callback:cell#misc#grab_focus; (* when hovering *)
           cell#connect#clicked ~callback:(fun () -> self#play i j) (* when clicked, execute [play i j]*)
         done done;
 
@@ -504,48 +503,73 @@ let setup_ui window =
   (* label displaying population and money *)
   let label = GMisc.label ~justify:`LEFT ~xpad:5 ~xalign:0.0 ~packing:frame2#add () in
 
-  (* [tuition_window] is a window that pops up once the user_tuition button
-   * ("Change Tuition") is clicked. *)
-  let tuition_window = GWindow.window ~title:"Set Tuition" ~border_width:0 () in
-  tuition_window#connect#destroy ~callback:tuition_window#destroy;
+  let delete_event ev =
+    print_endline "deleted"; true in
 
-  let tbox1 = GPack.vbox ~packing:tuition_window#add () in
-  let tbox2 = GPack.vbox ~spacing:10 ~border_width:50 ~packing:tbox1#add () in
 
-  let button_zero = GButton.radio_button ~label:"$0" ~active:false
-      ~packing:tbox2#add () in
-  let button_ten = GButton.radio_button ~group:button_zero#group
-      ~label:"$10000" ~active:true ~packing:tbox2#add () in
-  let button_twenty = GButton.radio_button ~group:button_zero#group
-      ~label:"$20000" ~active:false ~packing:tbox2#add () in
-  let button_thirty = GButton.radio_button ~group:button_zero#group
-      ~label:"$30000" ~active:false ~packing:tbox2#add () in
-  let button_forty = GButton.radio_button ~group:button_zero#group
-      ~label:"$40000" ~active:false ~packing:tbox2#add () in
-  let button_fifty = GButton.radio_button ~group:button_zero#group
-      ~label:"$50000" ~active:false ~packing:tbox2#add () in
-  let button_sixty = GButton.radio_button ~group:button_zero#group
-      ~label:"$60000" ~active:false ~packing:tbox2#add () in
-  let button_seventy = GButton.radio_button ~group:button_zero#group
-      ~label:"$70000" ~active:false ~packing:tbox2#add () in
-  let button_eighty = GButton.radio_button ~group:button_zero#group
-      ~label:"$80000" ~active:false ~packing:tbox2#add () in
-  let button_ninty = GButton.radio_button ~group:button_zero#group
-      ~label:"$90000" ~active:false ~packing:tbox2#add () in
-  let button_hundred = GButton.radio_button ~group:button_zero#group
-      ~label:"$100000" ~active:false ~packing:tbox2#add () in
+  let add_tuition () =
+    (* [tuition_window] is a window that pops up once the user_tuition button
+     * ("Change Tuition") is clicked. *)
+    (let tuition_window = GWindow.window ~title:"Set Tuition" ~border_width:0 () in
+    tuition_window#event#connect#delete ~callback:delete_event;
+    tuition_window#connect#destroy ~callback:tuition_window#destroy;
 
-  let separator = GMisc.separator `HORIZONTAL ~packing: tbox1#pack () in
+    let tbox1 = GPack.vbox ~packing:tuition_window#add () in
+    let tbox2 = GPack.vbox ~spacing:10 ~border_width:50 ~packing:tbox1#add () in
 
-  let tbox3 = GPack.vbox ~spacing:10 ~border_width:10 ~packing:tbox1#pack () in
+    let button_zero = GButton.radio_button ~label:"$0" ~active:false
+        ~packing:tbox2#add () in
+    let button_ten = GButton.radio_button ~group:button_zero#group
+        ~label:"$10000" ~active:true ~packing:tbox2#add () in
+    let button_twenty = GButton.radio_button ~group:button_zero#group
+        ~label:"$20000" ~active:false ~packing:tbox2#add () in
+    let button_thirty = GButton.radio_button ~group:button_zero#group
+        ~label:"$30000" ~active:false ~packing:tbox2#add () in
+    let button_forty = GButton.radio_button ~group:button_zero#group
+        ~label:"$40000" ~active:false ~packing:tbox2#add () in
+    let button_fifty = GButton.radio_button ~group:button_zero#group
+        ~label:"$50000" ~active:false ~packing:tbox2#add () in
+    let button_sixty = GButton.radio_button ~group:button_zero#group
+        ~label:"$60000" ~active:false ~packing:tbox2#add () in
+    let button_seventy = GButton.radio_button ~group:button_zero#group
+        ~label:"$70000" ~active:false ~packing:tbox2#add () in
+    let button_eighty = GButton.radio_button ~group:button_zero#group
+        ~label:"$80000" ~active:false ~packing:tbox2#add () in
+    let button_ninety = GButton.radio_button ~group:button_zero#group
+        ~label:"$90000" ~active:false ~packing:tbox2#add () in
+    let button_hundred = GButton.radio_button ~group:button_zero#group
+        ~label:"$100000" ~active:false ~packing:tbox2#add () in
 
-  let submit_button = GButton.button ~label:"Submit" ~packing:tbox3#add () in
-  submit_button#connect#clicked
-    ~callback:tuition_window#destroy; submit_button#grab_default ();
+    let separator = GMisc.separator `HORIZONTAL ~packing: tbox1#pack () in
+
+    let tbox3 = GPack.vbox ~spacing:10 ~border_width:10 ~packing:tbox1#pack () in
+
+    (* let set_tuition () =
+      let new_tuition = (if button_zero#active then 0
+        else if button_ten#active then 10000
+        else if button_twenty#active then 20000
+        else if button_thirty#active then 30000
+        else if button_forty#active then 40000
+        else if button_fifty#active then 50000
+        else if button_sixty#active then 60000
+        else if button_seventy#active then 70000
+        else if button_eighty#active then 80000
+        else if button_ninety#active then 90000
+        else if button_hundred#active then 100000
+        else State.get_tuition )
+      in print_endline (string_of_int new_tuition); State.do' SetTuition new_tuition
+    in *)
+
+    let submit_button = GButton.button ~label:"Submit" ~packing:tbox3#add () in
+    submit_button#connect#clicked
+      ~callback: (fun () ->
+                   tuition_window#destroy ());
+
+    tuition_window#show ()) in
 
   let user_tuition = GButton.button ~label:"Change Tuition" ~packing:hbox#add () in
   user_tuition#connect#clicked
-    ~callback: (fun () -> tuition_window#show ();
+    ~callback: (fun () -> add_tuition ();
                  print_endline "User tuition button was pressed");
 
   let filebutton = GButton.button () in
