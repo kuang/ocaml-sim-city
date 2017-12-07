@@ -78,32 +78,18 @@ val get_bcost : building_type -> int
 (* [get_bcost] returns the delete cost associated with a building_type. *)
 val get_dcost : building_type -> int
 
+(* [get_mcost] returns the maintenance cost associated with a building_type. *)
+val get_mcost : building_type -> int
+
 (* [init_state] returns the initial state of the game. *)
 val init_state : int -> gamestate
 
 (* [init_from_file] returns a state parsed from the file named filename. *)
 val init_from_file : string -> gamestate option
 
-(*exposed getter for happiness field.*)
-val get_happiness : gamestate -> int
-
-(*exposed getter for money field.*)
-val get_money : gamestate -> int
-
-(*exposed getter for tuition field.*)
-val get_tuition : gamestate -> int
-
 (*exposed getter for time_passed field.*)
 val get_time_passed : gamestate -> string
 
-(*exposed getter for disaster field.*)
-val get_disaster : gamestate -> disaster option
-
-(*exposed getter for message field.*)
-val get_message : gamestate -> string option
-
-(*exposed getter for lose field.*)
-val get_lose : gamestate -> bool
 
 (* [get_rpop row] returns the total population of all squares in [row]. *)
 val get_rpop : square array -> int
@@ -111,8 +97,6 @@ val get_rpop : square array -> int
 (* [get_num st f] is the sum of [f x] over all squares [x] in [st.grid] *)
 val get_num : square array array -> (square array -> int) -> int
 
-(*exposed getter for a given square. If out of bounds, returns None. *)
-val get_square : gamestate -> int -> int -> square option
 
 (* [do' command gamestate] applies [command] to [gamestate] and returns a
  * gamestate object representing the new state of game. *)

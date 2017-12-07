@@ -20,7 +20,7 @@ let road_pressed = ref false
 let pline_pressed = ref false
 let bulldoze_pressed = ref false
 
-let tuition = ref (State.get_tuition !initstate)
+let tuition = ref ((!initstate).tuition)
 
 let welcome_mess = "Welcome to NOT SIM CITY, an open-ended University Simulator
 based on real-life experience at Cornell University!"
@@ -237,7 +237,7 @@ class game ~(frame : #GContainer.container) ~(poplabel : #GMisc.label)
       | None -> ()
 
     method update_happlabel () =
-      let newhapp = string_of_int (State.get_happiness state) in
+      let newhapp = string_of_int (state.happiness) in
       happlabel#set_text (Printf.sprintf "Happiness: "^newhapp)
 
     method update_poplabel () =
@@ -245,7 +245,7 @@ class game ~(frame : #GContainer.container) ~(poplabel : #GMisc.label)
       poplabel#set_text (Printf.sprintf "Population: %d students" p)
 
     method update_fundslabel () =
-      let f = State.get_money state in
+      let f = state.money in
       fundslabel#set_text (Printf.sprintf "Funds: $%d" f)
 
     method update_build () =

@@ -193,23 +193,7 @@ let init_from_file (filename : string) =
       }
 (*  with _ -> None *)
 
-let get_disaster (st:gamestate) : disaster option = st.disaster
 
-let get_lose (st:gamestate) : bool = st.lose
-
-let get_message (st:gamestate) : string option = st.message
-
-let get_tuition (st:gamestate) : int = st.tuition
-
-let get_happiness (st:gamestate) : int = st.happiness
-
-let get_money (st:gamestate) : int = st.money
-
-let get_square st x y =
-  let maxlen = (Array.length st.grid)-1 in
-  if(x<0 || y<0 || x>maxlen || y>maxlen) then
-    None
-  else Some st.grid.(x).(y)
 
 (* returns: [month] is the current month calculated from time passed (number
  * of turns so far).
