@@ -202,7 +202,7 @@ open GameGrid
 
 class game ~(frame : #GContainer.container) ~(poplabel : #GMisc.label)
     ~(fundslabel : #GMisc.label) ~(happlabel : #GMisc.label)
-    ~(statusbar : #GMisc.statusbar) =
+    ~(statusbar : #GMisc.statusbar) ~(losebar : #GMisc.statusbar) =
 
   let size = Array.length (!initstate.grid) in
 
@@ -227,6 +227,9 @@ class game ~(frame : #GContainer.container) ~(poplabel : #GMisc.label)
 
     (* message that will flash in statusbar *)
     val messages = statusbar#new_context ~name:"messages"
+
+    val losestatus = losebar#new_context ~name:"lose_status"
+    val dis_messages = losebar#new_context ~name:"dis_message"
 
     method grid = cells
     method table = table
@@ -272,6 +275,13 @@ class game ~(frame : #GContainer.container) ~(poplabel : #GMisc.label)
       state <- do' TimeStep state;
       turn#pop ();
       turn#push ("Current Date: " ^ get_time_passed state);
+      let m = match state.message with
+        | None -> "University is up and running"
+        | Some mess -> mess
+      in
+      if state.lose then losestatus#pop (); losestatus#push m;
+      if state.disaster <> None then
+         dis_messages#flash m;
       self#update_happlabel ();
       self#update_poplabel ();
       self#update_fundslabel ()
@@ -336,7 +346,7 @@ class game ~(frame : #GContainer.container) ~(poplabel : #GMisc.label)
           cell#connect#clicked ~callback:(fun () -> self#play i j) (* when clicked, execute [play i j]*)
         done done;
 
-      turn#push "Current Date: Apr 1865";
+      losestatus#push "University is up and running";
       self#start_time;
       self#update_poplabel ();
       self#update_happlabel ();
@@ -537,6 +547,7 @@ let setup_ui window =
       ~hpolicy:`AUTOMATIC ~vpolicy:`AUTOMATIC ~packing:vbox#add () in
 
   (* box at bottom *)
+  let hbox_time = GPack.hbox ~packing:vbox#pack () in
   let hbox = GPack.hbox ~packing:vbox#pack () in
 
   (* status bar, displaying turn and messages *)
@@ -550,10 +561,12 @@ let setup_ui window =
   let funds = GMisc.label ~justify:`LEFT ~xpad:5 ~xalign:0.0 ~packing:framefunds#add () in
   let happ = GMisc.label ~justify:`LEFT ~xpad:5 ~xalign:0.0 ~packing:framehapp#add () in
 
+  let losebar = GMisc.statusbar ~packing:hbox_time#add ~height:30 ~has_resize_grip:false () in
+
   (* [tuition_window] is a window that pops up once the user_tuition button
    * ("Change Tuition") is clicked. *)
   let add_tuition () = (
-    let tuition_window = GWindow.window ~title:"Set Tuition" ~border_width:0 () in
+    let tuition_window = GWindow.window ~title:"Set Tuition"  ~position:`CENTER ~border_width:0 () in
       tuition_window#connect#destroy ~callback:tuition_window#destroy;
 
     let tbox1 = GPack.vbox ~packing:tuition_window#add () in
@@ -642,7 +655,7 @@ let setup_ui window =
                             "Cannot access 40x40 map - using default map"; !initstate))
   in nextbutton beginbox;
 
-  new game ~frame ~poplabel:pop ~fundslabel:funds ~happlabel:happ ~statusbar:bar
+  new game ~frame ~poplabel:pop ~fundslabel:funds ~happlabel:happ ~statusbar:bar ~losebar:losebar
 
 
 
