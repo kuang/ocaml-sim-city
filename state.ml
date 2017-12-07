@@ -374,7 +374,7 @@ let rec place_building (x:int) (y:int) (b:building_type) st : gamestate =
            level = 1;
            terrain = Clear;
            maintenance_cost = get_mcost b;
-           population = dorm_init_pop;
+           population = 0;
          }
        in let _ =  st.grid.(x).(y) <- new_square in
        let placed_building_st = place_sections x y (x,y) st in
@@ -389,7 +389,7 @@ let rec place_building (x:int) (y:int) (b:building_type) st : gamestate =
            btype = b;
            level = 1;
            maintenance_cost = get_mcost b;
-           population = dorm_init_pop;
+           population = 0;
          }
        in let _ =  st.grid.(x).(y) <- new_square in place_sections x y (x,y) st)
   | Road | Pline | Section _ | Empty -> (*single square, no pop*)
