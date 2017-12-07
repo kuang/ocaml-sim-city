@@ -277,7 +277,7 @@ class game ~(frame : #GContainer.container) ~(poplabel : #GMisc.label)
       if not !paused then (
         state <- do' TimeStep state;
         turn#pop ();
-        turn#push ("Current Date: " ^ get_time_passed state);
+        turn#push (get_time_passed state);
         let m = match state.message with
           | None -> "University is up and running"
           | Some mess -> mess
@@ -329,7 +329,6 @@ class game ~(frame : #GContainer.container) ~(poplabel : #GMisc.label)
       else if self#updatestate x y then
         (self#update_poplabel (); self#update_happlabel ();
          self#update_fundslabel (); self#make_message;
-         turn#pop(); turn#push ("Current Date: "^(State.get_time_passed state));
          for i = max (x-2) 0 to min (x+2) (size-1) do
            for j = max (y-2) 0 to min (y+2) (size-1) do
              let t = (Array.get (Array.get state.grid i) j).terrain in
@@ -353,7 +352,7 @@ class game ~(frame : #GContainer.container) ~(poplabel : #GMisc.label)
       self#update_poplabel ();
       self#update_happlabel ();
       self#update_fundslabel ();
-      turn#push "Current Date: Apr 1865";
+      turn#push (get_time_passed state);
       Async.(Thread.create Scheduler.go ());
       ()
   end
