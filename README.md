@@ -24,7 +24,7 @@ Run the game through `make run` - our makefile is included. Enjoy!
 
 ## Authors
 
-* **Billie Thompson**  
+* **Mark Anastos**  
 * **Annie Barnett**
 * **Meredith Young-Ng**
 * **Justin Kuang**
